@@ -1,4 +1,4 @@
-﻿@model banthietbidientu.Models.SanPham
+@model banthietbidientu.Models.SanPham
 
 @{
     ViewData["Title"] = Model.Name;
@@ -181,17 +181,28 @@
 
                             <div class="row align-items-end g-3">
                                 <div class="col-sm-4">
-                                    <label class="fw-bold mb-2">Số lượng:</label>
-                                    <div class="input-group">
-                                        <button class="btn btn-outline-secondary" type="button" onclick="updateQty(-1)"><i class="bi bi-dash"></i></button>
-                                        <input type="number" class="form-control text-center fw-bold" name="quantity" id="qtyInput" value="1" min="1" max="@Model.SoLuong" readonly>
-                                        <button class="btn btn-outline-secondary" type="button" onclick="updateQty(1)"><i class="bi bi-plus"></i></button>
+                                    <label class="fw-bold mb-2 small text-muted text-uppercase" style="letter-spacing: 0.05em;">Số lượng:</label>
+                                    <div class="input-group border rounded-pill overflow-hidden bg-white shadow-sm p-1">
+                                        <button class="btn btn-light rounded-pill border-0 px-3 text-secondary" type="button" onclick="updateQty(-1)"><i class="bi bi-dash fs-5"></i></button>
+                                        <input type="number" class="form-control text-center fw-bold border-0 bg-transparent fs-5" name="quantity" id="qtyInput" value="1" min="1" max="@Model.SoLuong" readonly>
+                                        <button class="btn btn-light rounded-pill border-0 px-3 text-secondary" type="button" onclick="updateQty(1)"><i class="bi bi-plus fs-5"></i></button>
                                     </div>
                                 </div>
                                 <div class="col-sm-8">
-                                    <button type="submit" class="btn btn-primary btn-lg w-100 py-2 shadow fw-bold rounded-3 text-uppercase">
-                                        <i class="bi bi-cart-plus me-2"></i> Thêm vào giỏ ngay
-                                    </button>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <button type="submit" class="btn btn-sleek-outline w-100 py-3 fw-bold rounded-pill text-uppercase d-flex align-items-center justify-content-center gap-2">
+                                                <i class="bi bi-cart-plus fs-5"></i>
+                                                <span>Thêm giỏ</span>
+                                            </button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="submit" formaction="@Url.Action("MuaNgay", "GioHang")" class="btn btn-sleek-accent w-100 py-3 fw-bold rounded-pill text-uppercase d-flex align-items-center justify-content-center gap-2">
+                                                <i class="bi bi-lightning-fill fs-5"></i>
+                                                <span>Mua ngay</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </form>

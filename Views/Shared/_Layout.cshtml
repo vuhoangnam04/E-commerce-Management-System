@@ -1,4 +1,4 @@
-﻿@inject banthietbidientu.Services.MemberService MemberService
+@inject banthietbidientu.Services.MemberService MemberService
 
 <!DOCTYPE html>
 <html lang="en">
@@ -8,8 +8,10 @@
     <title>@ViewData["Title"] - SmartTech</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/leaflet.css" asp-append-version="true" />
@@ -32,8 +34,8 @@
 
         body {
             margin: 0;
-            font-family: 'Be Vietnam Pro', Arial, sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -45,7 +47,12 @@
             position: fixed;
             top: 0;
             width: 100%;
-            background-color: #0d6efd;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.03);
+            transition: all 0.3s ease;
         }
 
         .dropdown-menu {
@@ -76,65 +83,96 @@
             align-items: center;
             justify-content: space-between;
             gap: 1.5rem;
-            padding: 0.75rem 1.5rem;
+            padding: 0.85rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
         .header-brand {
-            flex-shrink: 0;
+            font-weight: 800;
+            font-size: 1.35rem;
+            letter-spacing: -0.03em;
+            color: #0f172a !important;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-brand img {
+            height: 32px;
+            width: auto;
+            object-fit: contain;
+            border-radius: 8px;
         }
 
-        /* Search Bar */
+        /* Capsule Search */
         .header-search-wrapper {
             flex-grow: 1;
-            max-width: 600px;
+            max-width: 540px;
             position: relative;
         }
 
         .header-search-form {
             display: flex;
+            align-items: center;
             width: 100%;
-            border-radius: 50px;
-            overflow: hidden;
-            border: 2px solid rgba(255,255,255,0.2);
-            background: white;
-            transition: all 0.3s;
+            border-radius: 999px;
+            background: #f1f5f9;
+            border: 1px solid transparent;
+            padding: 3px 6px 3px 18px;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-            .header-search-form:focus-within {
-                box-shadow: 0 0 0 4px rgba(255,255,255,0.2);
-                border-color: white;
-            }
+        .header-search-form:focus-within {
+            background: #ffffff;
+            border-color: #0f172a;
+            box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.06);
+        }
 
-            .header-search-form .form-control {
-                border: none;
-                box-shadow: none;
-                padding-left: 20px;
-                font-size: 0.95rem;
-            }
+        .header-search-form .form-control {
+            border: none;
+            background: transparent;
+            box-shadow: none !important;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #0f172a;
+            padding: 0.5rem 0.5rem;
+        }
+        .header-search-form .form-control::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
 
-            .header-search-form .btn-search {
-                background-color: white;
-                border: none;
-                color: #0d6efd;
-                padding-right: 20px;
-                transition: 0.2s;
-            }
+        .header-search-form .btn-search {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #0f172a;
+            color: #ffffff;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .header-search-form .btn-search:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
 
-                .header-search-form .btn-search:hover {
-                    color: #0a58ca;
-                    transform: scale(1.1);
-                }
-
-        /* Live Search Results */
+        /* Search Autocomplete */
         #searchResults {
             position: absolute;
             top: 100%;
             left: 0;
             right: 0;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            margin-top: 8px;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.12);
+            margin-top: 10px;
             display: none;
             overflow: hidden;
             z-index: 1030;
@@ -143,141 +181,170 @@
         .search-item {
             display: flex;
             align-items: center;
-            padding: 10px 15px;
+            padding: 12px 18px;
             text-decoration: none;
-            color: #333;
-            transition: 0.2s;
-            border-bottom: 1px solid #f0f0f0;
+            color: #0f172a;
+            transition: background 0.15s;
+            border-bottom: 1px solid #f8fafc;
         }
-
-            .search-item:last-child {
-                border-bottom: none;
-            }
-
-            .search-item:hover {
-                background-color: #f8f9fa;
-            }
-
-            .search-item img {
-                width: 40px;
-                height: 40px;
-                object-fit: cover;
-                border-radius: 6px;
-                margin-right: 12px;
-                border: 1px solid #eee;
-            }
-
+        .search-item:last-child {
+            border-bottom: none;
+        }
+        .search-item:hover {
+            background-color: #f8fafc;
+        }
+        .search-item img {
+            width: 44px;
+            height: 44px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-right: 14px;
+            background: #f1f5f9;
+        }
         .search-item-info h6 {
             margin: 0;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
             font-weight: 600;
-            color: #212529;
+            color: #0f172a;
         }
-
         .search-item-info span {
-            font-size: 0.8rem;
-            color: #dc3545;
+            font-size: 0.85rem;
+            color: #2563eb;
             font-weight: 700;
         }
 
-        /* Trade-in Button */
-        .btn-trade-in {
-            background: linear-gradient(135deg, #FF8008 0%, #FFC837 100%);
-            border: none;
-            color: #fff;
-            font-weight: 700;
-            padding: 6px 18px;
-            border-radius: 50px;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(255, 128, 8, 0.3);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-        }
-
-            .btn-trade-in:hover {
-                background: linear-gradient(135deg, #FFC837 0%, #FF8008 100%);
-                transform: translateY(-2px);
-                box-shadow: 0 6px 15px rgba(255, 128, 8, 0.4);
-                color: white;
-            }
-
-            .btn-trade-in i {
-                font-size: 1.1rem;
-                margin-right: 5px;
-            }
-
+        /* Sleek Header Actions */
         .header-actions {
             display: flex;
-            gap: 0.75rem;
-            flex-shrink: 0;
+            gap: 0.6rem;
             align-items: center;
+            flex-shrink: 0;
         }
 
-            .header-actions .btn-outline-light {
-                border: 1px solid rgba(255,255,255,0.3);
-                font-weight: 500;
-            }
+        .btn-sleek-nav {
+            background: #ffffff;
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            color: #334155 !important;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 0.55rem 1.15rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-sleek-nav:hover {
+            background: #f8fafc;
+            border-color: rgba(15, 23, 42, 0.2);
+            color: #0f172a !important;
+            transform: translateY(-1px);
+        }
 
-                .header-actions .btn-outline-light:hover {
-                    background: rgba(255,255,255,0.1);
-                    border-color: white;
-                }
+        .btn-sleek-login {
+            background: #0f172a;
+            border: 1px solid #0f172a;
+            color: #ffffff !important;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 0.55rem 1.25rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-sleek-login:hover {
+            background: #1e293b;
+            color: #ffffff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        }
 
+        /* Category Nav */
         .header-nav {
-            background-color: #ffffff;
-            border-top: 1px solid #e9ecef;
-            border-bottom: 1px solid #e9ecef;
+            background-color: rgba(255, 255, 255, 0.85);
+            border-top: 1px solid rgba(15, 23, 42, 0.05);
         }
 
         .header-nav-list {
             display: flex;
             justify-content: center;
-            gap: 2.5rem;
+            align-items: center;
+            gap: 0.75rem;
             list-style: none;
-            padding: 0.75rem 0;
+            padding: 0.6rem 2rem;
             margin: 0;
             overflow-x: auto;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
-            .header-nav-list li a {
-                text-decoration: none;
-                color: #333;
-                font-weight: 600;
-                white-space: nowrap;
-                transition: color 0.2s;
-            }
+        .header-nav-list li a {
+            text-decoration: none;
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.88rem;
+            white-space: nowrap;
+            padding: 0.45rem 1rem;
+            border-radius: 999px;
+            transition: all 0.2s ease;
+        }
+        .header-nav-list li a:hover {
+            color: #0f172a;
+            background: #f1f5f9;
+        }
 
-                .header-nav-list li a:hover {
-                    color: #0d6efd;
-                }
+        /* Trade-in Sleek Pill */
+        .btn-trade-in {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: none;
+            color: #ffffff !important;
+            font-weight: 700;
+            padding: 0.45rem 1.15rem;
+            border-radius: 999px;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            text-decoration: none;
+        }
+        .btn-trade-in:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+            color: #ffffff !important;
+        }
+
+        /* Main Content Spacing */
+        .main-content {
+            padding-top: 140px;
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
 
         @@media (max-width: 991.98px) {
             .header-top {
                 flex-wrap: wrap;
+                padding: 0.75rem 1rem;
             }
-
             .header-search-wrapper {
                 order: 3;
                 width: 100%;
                 max-width: none;
                 margin-top: 0.5rem;
             }
-
             .main-content {
-                padding-top: 190px;
+                padding-top: 180px;
             }
-
             .header-nav-list {
                 justify-content: flex-start;
-                gap: 1.5rem;
-                padding-left: 1.5rem;
-                padding-right: 1.5rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
             }
         }
 
@@ -286,124 +353,124 @@
         }
 
         .site-footer {
-            background-color: #212529;
-            color: #adb5bd;
-            font-size: 0.9rem;
-            padding-top: 3rem;
+            background-color: #0b0f19;
+            color: #94a3b8;
+            font-size: 0.92rem;
+            padding-top: 4rem;
             margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
             .site-footer h5 {
-                color: #fff;
+                color: #f8fafc;
                 font-weight: 700;
-                margin-bottom: 1.2rem;
-                font-size: 1.1rem;
-                text-transform: uppercase;
+                margin-bottom: 1.25rem;
+                font-size: 1rem;
+                letter-spacing: -0.01em;
             }
 
             .site-footer ul li {
-                margin-bottom: 0.5rem;
+                margin-bottom: 0.65rem;
             }
 
             .site-footer a {
-                color: #adb5bd;
+                color: #94a3b8;
                 text-decoration: none;
-                transition: all 0.2s;
+                transition: color 0.2s;
             }
 
                 .site-footer a:hover {
-                    color: #fff;
-                    text-decoration: underline;
+                    color: #ffffff;
                 }
 
         .footer-social-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 38px;
-            height: 38px;
-            background-color: rgba(255,255,255,0.1);
+            width: 36px;
+            height: 36px;
+            background-color: rgba(255, 255, 255, 0.06);
             border-radius: 50%;
-            margin-right: 10px;
-            color: #fff;
-            transition: 0.3s;
+            color: #cbd5e1;
+            transition: all 0.2s;
         }
 
             .footer-social-icon:hover {
-                background-color: #0d6efd;
-                transform: translateY(-3px);
+                background-color: #2563eb;
+                color: #ffffff;
+                transform: translateY(-2px);
             }
 
         .footer-bottom {
-            background-color: #1a1d20;
-            padding: 1.5rem 0;
-            margin-top: 2rem;
-            border-top: 1px solid #343a40;
+            background-color: #05080e;
+            padding: 1.75rem 0;
+            margin-top: 3.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
     </style>
 </head>
 <body>
 
-    <header class="smarttech-header bg-primary text-white fixed-top shadow-sm" style="z-index: 1020;">
-        <div class="header-top container-fluid">
-            <a class="navbar-brand fw-bold d-flex align-items-center header-brand text-white" href="/">
-                <img src="~/image/logo.png" alt="SmartTech Logo" style="height: 30px; margin-right: 10px;">
-                SmartTech
+    <header class="smarttech-header fixed-top">
+        <div class="header-top">
+            <a class="navbar-brand fw-bold d-flex align-items-center header-brand" href="/">
+                <img src="~/image/logo.png" alt="SmartTech Logo" style="height: 32px; margin-right: 10px; border-radius: 8px;">
+                <span>SmartTech</span>
             </a>
 
             <div class="header-search-wrapper">
                 <form class="header-search-form" asp-controller="Home" asp-action="Index" method="get" autocomplete="off">
-                    <input id="searchInput" class="form-control form-control-lg" name="search" placeholder="Bạn tìm gì hôm nay?" value="@ViewData["SearchQuery"]">
-                    <button type="submit" class="btn btn-search btn-lg"><i class="bi bi-search"></i></button>
+                    <input id="searchInput" class="form-control" name="search" placeholder="Tìm kiếm iPhone, MacBook, phụ kiện..." value="@ViewData["SearchQuery"]">
+                    <button type="submit" class="btn btn-search" aria-label="Tìm kiếm"><i class="bi bi-search"></i></button>
                 </form>
                 <div id="searchResults"></div>
             </div>
 
             <div class="header-actions">
-                <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#locationModal">
-                    <i class="bi bi-geo-alt-fill"></i><span>Xem vị trí</span>
+                <button type="button" class="btn btn-sleek-nav" data-bs-toggle="modal" data-bs-target="#locationModal">
+                    <i class="bi bi-geo-alt"></i><span>Hệ thống shop</span>
                 </button>
 
-                <a asp-controller="GioHang" asp-action="Index" class="btn btn-outline-light">
-                    <i class="bi bi-cart-fill"></i><span>Giỏ Hàng</span>
+                <a asp-controller="GioHang" asp-action="Index" class="btn btn-sleek-nav">
+                    <i class="bi bi-bag"></i><span>Giỏ hàng</span>
                 </a>
 
                 @if (User.Identity.IsAuthenticated)
                 {
                     var currentTier = MemberService.GetUserTier(User.Identity.Name);
                     <div class="dropdown">
-                        <button class="btn dropdown-toggle d-flex align-items-center gap-2 shadow-sm @currentTier.CssClass" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="transition: all 0.3s; border: 1px solid rgba(255,255,255,0.5);">
-                            <i class="bi @currentTier.Icon fs-5"></i>
+                        <button class="btn dropdown-toggle d-flex align-items-center gap-2 @currentTier.CssClass" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 999px; padding: 0.45rem 1rem; border: 1px solid rgba(0,0,0,0.1);">
+                            <i class="bi @currentTier.Icon"></i>
                             <div class="d-flex flex-column text-start" style="line-height: 1.1;">
-                                <span style="font-size: 0.9rem;">@User.Identity.Name</span>
-                                <span style="font-size: 0.65rem; opacity: 0.9; text-transform: uppercase;">@currentTier.Name</span>
+                                <span style="font-size: 0.88rem; font-weight: 600;">@User.Identity.Name</span>
+                                <span style="font-size: 0.65rem; opacity: 0.85; text-transform: uppercase;">@currentTier.Name</span>
                             </div>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="userDropdown">
-                            <li class="px-3 py-2 text-center bg-light border-bottom">
+                            <li class="px-3 py-2 text-center bg-light border-bottom rounded-top">
                                 <div class="small text-muted">Hạng thành viên</div>
-                                <div class="fw-bold text-primary text-uppercase">@currentTier.Name</div>
+                                <div class="fw-bold text-dark text-uppercase">@currentTier.Name</div>
                                 @if (currentTier.CssClass != "tier-boss" && currentTier.CssClass != "tier-admin")
                                 {
-                                    <div class="progress mt-2" style="height: 4px;">
+                                    <div class="progress mt-2" style="height: 4px; border-radius: 999px;">
                                         @{
                                             decimal maxLevel = 100000000;
                                             var percent = (int)((currentTier.TotalSpent / maxLevel) * 100);
                                             if (percent > 100) percent = 100;
                                         }
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: @percent%"></div>
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: @percent%"></div>
                                     </div>
-                                    <small class="text-muted" style="font-size: 10px;">Chi tiêu: @currentTier.TotalSpent.ToString("#,##0") đ</small>
+                                    <small class="text-muted" style="font-size: 11px;">Đã chi tiêu: @currentTier.TotalSpent.ToString("#,##0") đ</small>
                                 }
                             </li>
                             @if (User.IsInRole("Admin") || User.IsInRole("Boss"))
                             {
-                                <li><a class="dropdown-item text-danger fw-bold py-2" asp-controller="Admin" asp-action="Index"><i class="bi bi-speedometer2 me-2"></i> Trang quản trị</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger fw-bold py-2 mt-1" asp-controller="Admin" asp-action="Index"><i class="bi bi-speedometer2 me-2"></i> Trang quản trị</a></li>
+                                <li><hr class="dropdown-divider my-1"></li>
                             }
-                            <li><a class="dropdown-item py-2" asp-controller="Login" asp-action="Profile"><i class="bi bi-person-badge me-2"></i> Hồ sơ của tôi</a></li>
-                            <li><a class="dropdown-item py-2" asp-controller="Login" asp-action="LichSuMuaHang"><i class="bi bi-bag-check me-2"></i> Lịch sử mua hàng</a></li>
-                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item py-2" asp-controller="Login" asp-action="Profile"><i class="bi bi-person-badge me-2 text-muted"></i> Hồ sơ của tôi</a></li>
+                            <li><a class="dropdown-item py-2" asp-controller="Login" asp-action="LichSuMuaHang"><i class="bi bi-bag-check me-2 text-muted"></i> Lịch sử mua hàng</a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
                             <li>
                                 <form asp-controller="Login" asp-action="Logout" method="post" style="margin:0;">
                                     <button type="submit" class="dropdown-item text-danger py-2"><i class="bi bi-box-arrow-right me-2"></i> Đăng xuất</button>
@@ -414,8 +481,8 @@
                 }
                 else
                 {
-                    <a class="btn btn-outline-light" asp-controller="Login" asp-action="DangNhap">
-                        <i class="bi bi-person-circle"></i><span>Đăng nhập</span>
+                    <a class="btn btn-sleek-login" asp-controller="Login" asp-action="DangNhap">
+                        <i class="bi bi-person"></i><span>Đăng nhập</span>
                     </a>
                 }
             </div>

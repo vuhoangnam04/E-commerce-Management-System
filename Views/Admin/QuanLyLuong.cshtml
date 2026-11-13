@@ -1,4 +1,4 @@
-﻿@model List<banthietbidientu.Models.PayrollViewModel>
+@model List<banthietbidientu.Models.PayrollViewModel>
 @{
     ViewData["Title"] = "Bảng Lương & Hoa Hồng";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
@@ -47,6 +47,13 @@
             <button type="submit" class="btn btn-primary btn-sm fw-bold px-4 text-nowrap">
                 <i class="bi bi-search me-1"></i> Xem Bảng Lương
             </button>
+
+            @if (User.IsInRole("Boss"))
+            {
+                <a asp-action="XuatExcelLuong" asp-route-month="@ViewBag.SelectedMonth" asp-route-year="@ViewBag.SelectedYear" class="btn btn-outline-success btn-sm fw-bold px-3 text-nowrap">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Xuất CSV
+                </a>
+            }
         </form>
     </div>
 
@@ -146,6 +153,9 @@
                                         {
                                             <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Đã chốt</span>
                                             <div class="text-muted small mt-1" style="font-size: 10px;">@item.NgayChot?.ToString("dd/MM HH:mm")</div>
+                                            <button onclick="huyChotLuong(@item.TaiKhoanId)" class="btn btn-sm btn-outline-danger mt-1 py-0 px-2" style="font-size: 11px;" title="Mở khóa để sửa lại">
+                                                <i class="bi bi-unlock"></i> Mở khóa
+                                            </button>
                                         }
                                         else
                                         {
@@ -194,7 +204,7 @@
 
         // Hàm chốt lương cứng (Không cho sửa nữa)
         function chotLuong(id) {
-            if(!confirm('Xác nhận chốt lương tháng này cho nhân viên? Sau khi chốt sẽ không thể sửa đổi số liệu.')) return;
+            if(!confirm('Xác nhận chốt lương tháng này cho nhân viên? Sau khi chốt sẽ khóa số liệu.')) return;
 
             let formData = new FormData();
             formData.append('taiKhoanId', id);
@@ -206,6 +216,22 @@
             .then(data => {
                 if(data.success) location.reload();
                 else alert(data.message);
+            });
+        }
+
+        function huyChotLuong(id) {
+            if(!confirm('Bạn có chắc muốn mở khóa để chỉnh sửa lại bảng lương tháng này?')) return;
+
+            let formData = new FormData();
+            formData.append('taiKhoanId', id);
+            formData.append('month', '@ViewBag.SelectedMonth');
+            formData.append('year', '@ViewBag.SelectedYear');
+
+            fetch('/Admin/HuyChotLuong', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) location.reload();
+                else alert(data.message || 'Lỗi khi mở khóa bảng lương');
             });
         }
     </script>

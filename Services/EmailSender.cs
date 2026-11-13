@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Mail;
 
 namespace banthietbidientu.Services
@@ -28,13 +28,15 @@ namespace banthietbidientu.Services
             string senderEmail = _configuration["EmailSettings:SenderEmail"];
             string password = _configuration["EmailSettings:Password"];
 
-            var client = new SmtpClient(mailServer, mailPort)
+            password = password?.Trim().Replace(" ", "");
+
+            using var client = new SmtpClient(mailServer, mailPort)
             {
                 Credentials = new NetworkCredential(senderEmail, password),
                 EnableSsl = true
             };
 
-            var mailMessage = new MailMessage
+            using var mailMessage = new MailMessage
             {
                 From = new MailAddress(senderEmail, senderName),
                 Subject = subject,

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<banthietbidientu.Models.Voucher>
+@model IEnumerable<banthietbidientu.Models.Voucher>
 @{
     ViewData["Title"] = "Quản lý Mã giảm giá"; Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
@@ -8,6 +8,21 @@
         <h4 class="fw-bold text-primary">Quản Lý Mã Giảm Giá</h4>
         <a asp-action="ThemVoucher" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>Tạo Mã Mới</a>
     </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body">

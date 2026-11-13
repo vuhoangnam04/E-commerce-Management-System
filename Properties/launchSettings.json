@@ -1,7 +1,7 @@
 ﻿{
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "iisSettings": {
-    "windowsAuthentication": false,
+    "windowsAuthentication": true,
     "anonymousAuthentication": true,
     "iisExpress": {
       "applicationUrl": "http://localhost:61613",
@@ -19,7 +19,7 @@
       }
     },
 
-    /* === (MỚI) THÊM KHỐI "HTTPS" NÀY VÀO === */
+    
     "https": {
       "commandName": "Project",
       "dotnetRunMessages": true,
@@ -29,7 +29,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    /* ======================================= */
+    
 
     "IIS Express": {
       "commandName": "IISExpress",

@@ -1,266 +1,494 @@
-﻿@model IEnumerable<banthietbidientu.Models.DonHangViewModel>
+@model IEnumerable<banthietbidientu.Models.DonHangViewModel>
 
 @{
-    ViewData["Title"] = "Tổng quan hệ thống";
+    ViewData["Title"] = "Quản trị quy trình làm việc";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    double growth = (double)(ViewBag.RevenueGrowth ?? 0);
 }
 
-<style>
-    /* Dashboard Cards */
-    .dash-card {
-        border: none;
-        border-radius: 12px;
-        color: white;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        transition: transform 0.2s;
-        height: 100px;
-    }
+<div class="container-fluid px-0">
 
-        .dash-card .card-body {
-            padding: 12px 15px;
-        }
-
-        .dash-card:hover {
-            transform: translateY(-3px);
-        }
-
-    .dash-icon {
-        position: absolute;
-        right: 10px;
-        bottom: 5px;
-        font-size: 3rem;
-        opacity: 0.15;
-        transform: rotate(-10deg);
-    }
-
-    .bg-g-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .bg-g-success {
-        background: linear-gradient(135deg, #2af598 0%, #009efd 100%);
-    }
-
-    .bg-g-warning {
-        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-    }
-
-    .bg-g-info {
-        background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
-    }
-
-    /* Chart Box */
-    .chart-box {
-        background: white;
-        border-radius: 12px;
-        padding: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        height: 100%;
-    }
-
-    .chart-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .chart-title {
-        font-weight: 700;
-        color: #444;
-        font-size: 0.95rem;
-        margin: 0;
-    }
-
-    /* [ĐÃ SỬA] Tăng chiều cao lên x3 (600px) */
-    .chart-container-fixed {
-        position: relative;
-        height: 600px;
-        width: 100%;
-    }
-
-    /* Tăng chiều cao Pie Chart cho cân đối */
-    .pie-container-fixed {
-        position: relative;
-        height: 500px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-</style>
-
-<div class="container-fluid p-3">
-
-    <div class="row g-3 mb-3">
-        <div class="col-xl-3 col-md-6">
-            <div class="card dash-card bg-g-success h-100">
-                <div class="card-body">
-                    <div class="text-uppercase small fw-bold opacity-75" style="font-size: 0.7rem;">Doanh thu hôm nay</div>
-                    <div class="h4 fw-bold mb-0 mt-1">@(((decimal)ViewBag.DoanhThuHomNay).ToString("N0")) đ</div>
-                    <div class="small mt-1" style="font-size: 0.75rem;"><i class="bi bi-cart-check"></i> @ViewBag.DonHangHomNay đơn mới</div>
-                    <i class="bi bi-currency-dollar dash-icon"></i>
-                </div>
+    <!-- PAGE HEADER: Quản trị quy trình làm việc -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary text-white rounded-pill px-3 py-1 fw-bold" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                    <i class="bi bi-diagram-3-fill me-1"></i> WORKFLOW ENGINE
+                </span>
+                <span class="text-muted small">&bull; Hệ thống vận hành chuỗi thiết bị điện tử</span>
             </div>
+            <h3 class="fw-bold text-white mb-1" style="letter-spacing: -0.02em;">Bảng Điều Khiển Quy Trình Vận Hành</h3>
+            <p class="text-muted small mb-0">Bao quát toàn bộ quy trình: Nhập kho &rarr; Điều phối 3 miền &rarr; Xử lý đơn hàng &rarr; CSKH &rarr; Tài chính & Thuế</p>
         </div>
 
-        <div class="col-xl-3 col-md-6">
-            <div class="card dash-card bg-g-warning h-100 text-white">
-                <div class="card-body">
-                    <div class="text-uppercase small fw-bold opacity-75" style="font-size: 0.7rem;">Đơn chờ xử lý</div>
-                    <div class="h4 fw-bold mb-0 mt-1">@ViewBag.DonChoXuLy</div>
-                    <div class="small mt-1" style="font-size: 0.75rem;">Cần duyệt ngay</div>
-                    <i class="bi bi-hourglass-split dash-icon"></i>
-                </div>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8rem; font-weight: 600;">
+                <span class="rounded-circle bg-success d-inline-block" style="width: 8px; height: 8px; box-shadow: 0 0 8px #10b981;"></span>
+                Hệ thống trực tuyến 24/7
+            </span>
+            <a href="@Url.Action("Index", "Admin")" class="btn btn-sm btn-dark border border-secondary rounded-pill px-3 py-2 text-white fw-semibold">
+                <i class="bi bi-arrow-clockwise me-1"></i> Làm mới quy trình
+            </a>
+        </div>
+    </div>
+
+    <!-- WORKFLOW PIPELINE MAP: 5 Giai Đoạn Quy Trình Tuần Hoàn -->
+    <div class="workflow-pipeline-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="small fw-bold text-uppercase text-muted" style="letter-spacing: 0.08em; font-size: 0.72rem;">
+                <i class="bi bi-arrow-repeat text-primary me-1"></i> Sơ đồ luồng quy trình vận hành toàn chuỗi
             </div>
+            <span class="text-muted" style="font-size: 0.75rem;">Quy trình tự động hóa khép kín</span>
         </div>
 
-        <div class="col-xl-3 col-md-6">
-            <div class="card dash-card bg-g-primary h-100">
-                <div class="card-body">
-                    <div class="text-uppercase small fw-bold opacity-75" style="font-size: 0.7rem;">Doanh thu tháng này</div>
-                    <div class="h4 fw-bold mb-0 mt-1">@(((decimal)ViewBag.RevenueThisMonth).ToString("N0")) đ</div>
+        <div class="pipeline-stepper">
+            <!-- Bước 1: Cung ứng & Nhập hàng -->
+            <a href="@Url.Action("QuanLyNhapHang", "Warehouse")" class="pipeline-step-item">
+                <div class="pipeline-step-icon" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3);">
+                    <i class="bi bi-box-arrow-in-down"></i>
+                </div>
+                <div>
+                    <div class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Giai đoạn 1</div>
+                    <div class="fw-bold text-white small">Nhập kho cung ứng</div>
+                    <div class="text-muted" style="font-size: 0.7rem;">Kiểm đếm & nhập hàng</div>
+                </div>
+            </a>
 
-                    <div class="small mt-1" style="font-size: 0.75rem;">
-                        @if (ViewBag.RevenueGrowth > 0)
-                        {
-                            <span><i class="bi bi-arrow-up-circle-fill"></i> Tăng @ViewBag.RevenueGrowth.ToString("0.0")%</span>
-                        }
-                        else if (ViewBag.RevenueGrowth < 0)
-                        {
-                            <span style="color: #ffcccc;"><i class="bi bi-arrow-down-circle-fill"></i> Giảm @Math.Abs((double)ViewBag.RevenueGrowth).ToString("0.0")%</span>
-                        }
-                        else
-                        {
-                            <span><i class="bi bi-dash-circle"></i> Không đổi</span>
-                        }
-                        <span class="opacity-75"> so với tháng trước</span>
+            <div class="pipeline-arrow"><i class="bi bi-chevron-right"></i></div>
+
+            <!-- Bước 2: Điều phối kho 3 miền -->
+            <a href="@Url.Action("QuanLyChuyenKho", "Warehouse")" class="pipeline-step-item">
+                <div class="pipeline-step-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <i class="bi bi-truck-front-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Giai đoạn 2</div>
+                    <div class="fw-bold text-white small">Điều phối kho 3 miền</div>
+                    <div class="text-muted" style="font-size: 0.7rem;">Hà Nội &bull; ĐN &bull; HCM</div>
+                </div>
+            </a>
+
+            <div class="pipeline-arrow"><i class="bi bi-chevron-right"></i></div>
+
+            <!-- Bước 3: Đơn hàng & Bán lẻ -->
+            <a href="@Url.Action("QuanLyDonHang", "Admin")" class="pipeline-step-item" style="border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.08);">
+                <div class="pipeline-step-icon" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4);">
+                    <i class="bi bi-receipt-cutoff"></i>
+                </div>
+                <div>
+                    <div class="text-primary text-uppercase fw-bold" style="font-size: 0.65rem;">Giai đoạn 3 (Trọng tâm)</div>
+                    <div class="fw-bold text-white small">Xử lý đơn & Xuất kho</div>
+                    <div class="text-warning fw-semibold" style="font-size: 0.7rem;">@ViewBag.DonChoXuLy đơn cần duyệt</div>
+                </div>
+            </a>
+
+            <div class="pipeline-arrow"><i class="bi bi-chevron-right"></i></div>
+
+            <!-- Bước 4: Chăm sóc & Thu cũ -->
+            <a href="@Url.Action("QuanLyThuMua", "Admin")" class="pipeline-step-item">
+                <div class="pipeline-step-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                    <i class="bi bi-arrow-left-right"></i>
+                </div>
+                <div>
+                    <div class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Giai đoạn 4</div>
+                    <div class="fw-bold text-white small">Thu cũ & CSKH Live</div>
+                    <div class="text-muted" style="font-size: 0.7rem;">Thẩm định & Chat khách</div>
+                </div>
+            </a>
+
+            <div class="pipeline-arrow"><i class="bi bi-chevron-right"></i></div>
+
+            <!-- Bước 5: Tài chính & Thuế -->
+            <a href="@Url.Action("BaoCao", "Admin")" class="pipeline-step-item">
+                <div class="pipeline-step-icon" style="background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3);">
+                    <i class="bi bi-bank2"></i>
+                </div>
+                <div>
+                    <div class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Giai đoạn 5</div>
+                    <div class="fw-bold text-white small">Tài chính & Thuế VAT</div>
+                    <div class="text-muted" style="font-size: 0.7rem;">Hạch toán & Bảng lương</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 MODERN DARK KPI CARDS -->
+    <div class="row g-3 mb-4">
+        <!-- KPI 1: Doanh thu hôm nay -->
+        <div class="col-xl-3 col-md-6">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="kpi-label">Doanh thu hôm nay</span>
+                    <div class="kpi-icon-container kpi-icon-emerald">
+                        <i class="bi bi-wallet2"></i>
                     </div>
-
-                    <i class="bi bi-graph-up-arrow dash-icon"></i>
+                </div>
+                <div class="kpi-value mb-2">@(((decimal)ViewBag.DoanhThuHomNay).ToString("N0")) <span style="font-size: 1rem; font-weight: 600; color: #94a3b8;">đ</span></div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="kpi-badge kpi-badge-success">
+                        <i class="bi bi-bag-check-fill"></i> @ViewBag.DonHangHomNay đơn mới
+                    </span>
+                    <span class="text-muted" style="font-size: 0.75rem;">Hôm nay</span>
                 </div>
             </div>
         </div>
 
+        <!-- KPI 2: Đơn chờ xử lý -->
         <div class="col-xl-3 col-md-6">
-            <div class="card dash-card bg-g-info h-100">
-                <div class="card-body">
-                    <div class="text-uppercase small fw-bold opacity-75" style="font-size: 0.7rem;">Khách hàng</div>
-                    <div class="h4 fw-bold mb-0 mt-1">@ViewBag.TongKhachHang</div>
-                    <div class="small mt-1" style="font-size: 0.75rem;">Thành viên</div>
-                    <i class="bi bi-people-fill dash-icon"></i>
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="kpi-label">Đơn hàng chờ duyệt</span>
+                    <div class="kpi-icon-container kpi-icon-amber">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+                <div class="kpi-value mb-2">@ViewBag.DonChoXuLy <span style="font-size: 1rem; font-weight: 600; color: #94a3b8;">đơn</span></div>
+                <div class="d-flex align-items-center justify-content-between">
+                    @if ((int)ViewBag.DonChoXuLy > 0)
+                    {
+                        <a href="@Url.Action("QuanLyDonHang", "Admin")" class="kpi-badge kpi-badge-danger text-decoration-none">
+                            <i class="bi bi-exclamation-circle-fill"></i> Cần xuất kho ngay
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="kpi-badge kpi-badge-success">
+                            <i class="bi bi-check-all"></i> Đã xử lý hết
+                        </span>
+                    }
+                    <span class="text-muted" style="font-size: 0.75rem;">Chờ xử lý</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 3: Doanh thu tháng này -->
+        <div class="col-xl-3 col-md-6">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="kpi-label">Doanh thu tháng này</span>
+                    <div class="kpi-icon-container kpi-icon-indigo">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                </div>
+                <div class="kpi-value mb-2">@(((decimal)ViewBag.RevenueThisMonth).ToString("N0")) <span style="font-size: 1rem; font-weight: 600; color: #94a3b8;">đ</span></div>
+                <div class="d-flex align-items-center justify-content-between">
+                    @if (growth > 0)
+                    {
+                        <span class="kpi-badge kpi-badge-success">
+                            <i class="bi bi-arrow-up-right"></i> +@growth.ToString("0.0")%
+                        </span>
+                    }
+                    else if (growth < 0)
+                    {
+                        <span class="kpi-badge kpi-badge-danger">
+                            <i class="bi bi-arrow-down-right"></i> @growth.ToString("0.0")%
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="kpi-badge kpi-badge-neutral">
+                            <i class="bi bi-dash"></i> 0.0%
+                        </span>
+                    }
+                    <span class="text-muted" style="font-size: 0.75rem;">vs tháng trước</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 4: Khách hàng thành viên -->
+        <div class="col-xl-3 col-md-6">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="kpi-label">Cơ sở khách hàng</span>
+                    <div class="kpi-icon-container kpi-icon-sky">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <div class="kpi-value mb-2">@ViewBag.TongKhachHang <span style="font-size: 1rem; font-weight: 600; color: #94a3b8;">thành viên</span></div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="kpi-badge kpi-badge-neutral">
+                        <i class="bi bi-shield-check"></i> Đang tương tác
+                    </span>
+                    <span class="text-muted" style="font-size: 0.75rem;">Toàn hệ thống</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-3 mb-3">
+    <!-- CHARTS SECTION: Hiệu Quả Quy Trình Kinh Doanh -->
+    <div class="row g-4 mb-4">
+        <!-- 7 Days Bar & Line Chart -->
         <div class="col-lg-8">
-            <div class="chart-box">
-                <div class="chart-header">
-                    <h6 class="chart-title"><i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Hiệu quả 7 ngày qua</h6>
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold text-white" style="font-size: 0.95rem;">Hiệu quả kinh doanh 7 ngày qua</div>
+                        <div class="text-muted" style="font-size: 0.78rem;">Đối chiếu dòng doanh thu thực thu và lưu lượng đơn đặt hàng</div>
+                    </div>
+                    <span class="badge rounded-pill px-3 py-1" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; font-size: 0.75rem;">
+                        7 ngày gần nhất
+                    </span>
                 </div>
-                <div class="chart-container-fixed">
-                    <canvas id="weekChart"></canvas>
+                <div class="card-body p-4">
+                    <div style="position: relative; height: 380px; width: 100%;">
+                        <canvas id="weekChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
 
+        <!-- Doughnut Chart: Trạng Thái Quy Trình Giao Nhận -->
         <div class="col-lg-4">
-            <div class="chart-box">
-                <div class="chart-header">
-                    <h6 class="chart-title"><i class="bi bi-pie-chart-fill text-info me-2"></i>Tỷ lệ đơn hàng</h6>
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold text-white" style="font-size: 0.95rem;">Tỷ lệ phân bố đơn hàng</div>
+                        <div class="text-muted" style="font-size: 0.78rem;">Theo trạng thái xử lý trong quy trình</div>
+                    </div>
                 </div>
-                <div class="pie-container-fixed">
-                    <canvas id="statusChart"></canvas>
+                <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center">
+                    <div style="position: relative; height: 260px; width: 100%; max-width: 260px;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="w-100 mt-4 pt-3 border-top" style="border-color: rgba(255,255,255,0.08) !important;">
+                        <div class="row g-2 text-center" style="font-size: 0.8rem;">
+                            <div class="col-6">
+                                <div class="p-2 rounded-3" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);">
+                                    <div class="text-muted" style="font-size: 0.72rem;">Hoàn tất</div>
+                                    <div class="fw-bold text-success">@ViewBag.PieCompleted đơn</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 rounded-3" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);">
+                                    <div class="text-muted" style="font-size: 0.72rem;">Đang giao</div>
+                                    <div class="fw-bold text-primary">@ViewBag.PieShipping đơn</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 rounded-3" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);">
+                                    <div class="text-muted" style="font-size: 0.72rem;">Chờ duyệt</div>
+                                    <div class="fw-bold text-warning">@ViewBag.PiePending đơn</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 rounded-3" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);">
+                                    <div class="text-muted" style="font-size: 0.72rem;">Đã hủy</div>
+                                    <div class="fw-bold text-danger">@ViewBag.PieCancelled đơn</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="mt-3 text-center small text-muted" style="font-size: 0.85rem;">Phân bố trạng thái</div>
             </div>
         </div>
     </div>
 
+    <!-- QUICK WORKFLOW ACTIONS -->
+    <div class="card">
+        <div class="card-header">
+            <span class="fw-bold text-white" style="font-size: 0.95rem;">Truy cập nhanh các trạm kiểm soát quy trình</span>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-3">
+                <div class="col-md-3 col-sm-6">
+                    <a href="@Url.Action("Index", "ProductManager")" class="d-flex align-items-center p-3 rounded-3 border text-decoration-none text-white transition" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08) !important;">
+                        <div class="rounded-3 p-3 me-3 text-primary fs-4" style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3);">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size: 0.9rem;">Kho sản phẩm</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">Kiểm kê tồn kho 3 miền</div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="@Url.Action("QuanLyDonHang", "Admin")" class="d-flex align-items-center p-3 rounded-3 border text-decoration-none text-white transition" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08) !important;">
+                        <div class="rounded-3 p-3 me-3 text-warning fs-4" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3);">
+                            <i class="bi bi-receipt-cutoff"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size: 0.9rem;">Duyệt đơn hàng</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">Xuất kho & in hóa đơn</div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="@Url.Action("QuanLyChuyenKho", "Warehouse")" class="d-flex align-items-center p-3 rounded-3 border text-decoration-none text-white transition" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08) !important;">
+                        <div class="rounded-3 p-3 me-3 text-info fs-4" style="background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3);">
+                            <i class="bi bi-truck-front"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size: 0.9rem;">Điều phối kho</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">Lệnh luân chuyển hàng</div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a href="@Url.Action("Index", "Chat")" class="d-flex align-items-center p-3 rounded-3 border text-decoration-none text-white transition" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08) !important;">
+                        <div class="rounded-3 p-3 me-3 text-success fs-4" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3);">
+                            <i class="bi bi-chat-dots"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size: 0.9rem;">Live Chat CSKH</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">Hỗ trợ khách hàng SignalR</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // 1. Biểu đồ Cột (7 Ngày)
-        var ctxWeek = document.getElementById("weekChart");
-        new Chart(ctxWeek, {
-            type: 'bar',
-            data: {
-                labels: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.ChartLabels)),
-                datasets: [
-                    {
-                        label: "Doanh thu",
-                        type: "bar",
-                        backgroundColor: "#4e73df",
-                        borderRadius: 3,
-                        barPercentage: 0.5,
-                        data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.ChartRevenue)),
-                        yAxisID: 'y',
-                        order: 2
-                    },
-                    {
-                        label: "Đơn hàng",
-                        type: "line",
-                        borderColor: "#1cc88a",
-                        backgroundColor: "#1cc88a",
-                        pointRadius: 4,
-                        borderWidth: 2,
-                        data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.ChartOrders)),
-                        yAxisID: 'y1',
-                        order: 1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                scales: {
-                    x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-                    y: {
-                        type: 'linear', display: true, position: 'left',
-                        ticks: { callback: function(val) { return val >= 1000000 ? (val/1000000) + 'M' : val/1000 + 'k'; }, font: { size: 11 } },
-                        grid: { borderDash: [4] }
-                    },
-                    y1: {
-                        type: 'linear', display: true, position: 'right', grid: { display: false },
-                        ticks: { stepSize: 1, font: { size: 11 } }
-                    }
-                },
-                plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 12 } } } }
-            }
-        });
+        // Set Chart.js Defaults for Modern Dark Mode
+        Chart.defaults.font.family = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        Chart.defaults.color = '#94a3b8';
 
-        // 2. Biểu đồ Tròn (Trạng thái)
-        var ctxStatus = document.getElementById("statusChart");
-        new Chart(ctxStatus, {
-            type: 'doughnut',
-            data: {
-                labels: ["Hoàn thành", "Đang giao", "Chờ xử lý", "Đã hủy"],
-                datasets: [{
-                    data: [
-        @ViewBag.PieCompleted,
-        @ViewBag.PieShipping,
-        @ViewBag.PiePending,
-        @ViewBag.PieCancelled
-                    ],
-                    backgroundColor: ["#1cc88a", "#4e73df", "#f6c23e", "#e74a3b"],
-                    hoverOffset: 4,
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } } }
+        // 1. Biểu đồ Doanh thu & Đơn hàng 7 ngày (Dark Mode Palette)
+        const ctxWeek = document.getElementById("weekChart");
+        if (ctxWeek) {
+            new Chart(ctxWeek, {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.ChartLabels)),
+                    datasets: [
+                        {
+                            label: "Doanh thu (VNĐ)",
+                            type: "bar",
+                            backgroundColor: "rgba(59, 130, 246, 0.8)",
+                            hoverBackgroundColor: "#60a5fa",
+                            borderRadius: 8,
+                            borderSkipped: false,
+                            barPercentage: 0.45,
+                            data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.ChartRevenue)),
+                            yAxisID: 'y',
+                            order: 2
+                        },
+                        {
+                            label: "Số đơn hàng",
+                            type: "line",
+                            borderColor: "#34d399",
+                            backgroundColor: "rgba(52, 211, 153, 0.15)",
+                            pointBackgroundColor: "#34d399",
+                            pointBorderColor: "#0f172a",
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.35,
+                            data: @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.ChartOrders)),
+                            yAxisID: 'y1',
+                            order: 1
+                        }
+                    ]
                 },
-                cutout: '65%'
-            }
-        });
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 8,
+                                font: { size: 12, weight: '600' },
+                                color: '#cbd5e1'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            borderColor: 'rgba(255,255,255,0.15)',
+                            borderWidth: 1,
+                            titleColor: '#ffffff',
+                            bodyColor: '#cbd5e1',
+                            padding: 12,
+                            cornerRadius: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.yAxisID === 'y') {
+                                        return ' Doanh thu: ' + context.parsed.y.toLocaleString('vi-VN') + ' đ';
+                                    } else {
+                                        return ' Đơn hàng: ' + context.parsed.y + ' đơn';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { size: 11, weight: '500' } }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: function(val) {
+                                    return val >= 1000000 ? (val / 1000000) + ' Tr' : (val >= 1000 ? (val / 1000) + ' k' : val);
+                                },
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.06)',
+                                drawBorder: false
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', stepSize: 1, font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Biểu đồ Doughnut Trạng thái Đơn
+        const ctxStatus = document.getElementById("statusChart");
+        if (ctxStatus) {
+            new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: ["Hoàn thành", "Đang giao", "Chờ duyệt", "Đã hủy"],
+                    datasets: [{
+                        data: [
+                            @ViewBag.PieCompleted,
+                            @ViewBag.PieShipping,
+                            @ViewBag.PiePending,
+                            @ViewBag.PieCancelled
+                        ],
+                        backgroundColor: ["#10b981", "#3b82f6", "#f59e0b", "#ef4444"],
+                        hoverOffset: 6,
+                        borderWidth: 2,
+                        borderColor: '#131d33'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            borderColor: 'rgba(255,255,255,0.15)',
+                            borderWidth: 1,
+                            titleColor: '#ffffff',
+                            bodyColor: '#cbd5e1',
+                            padding: 10,
+                            cornerRadius: 8
+                        }
+                    },
+                    cutout: '72%'
+                }
+            });
+        }
     </script>
 }

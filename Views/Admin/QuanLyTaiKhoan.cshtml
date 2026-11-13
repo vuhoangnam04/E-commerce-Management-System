@@ -1,267 +1,1067 @@
-﻿@model IEnumerable<banthietbidientu.Models.TaiKhoan>
+@model IEnumerable<banthietbidientu.Models.TaiKhoan>
 @inject banthietbidientu.Services.MemberService MemberService
 
 @{
-    ViewData["Title"] = "Quản lý tài khoản";
+    ViewData["Title"] = "Quản lý nhân sự & Phân quyền";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var allUsers = Model?.ToList() ?? new List<banthietbidientu.Models.TaiKhoan>();
+    int totalCount = allUsers.Count;
+    int bossCount = allUsers.Count(u => u.Role == "Boss");
+    int adminCount = allUsers.Count(u => u.Role == "Admin");
+    int managerCount = bossCount + adminCount;
+    int customerCount = allUsers.Count(u => u.Role != "Boss" && u.Role != "Admin");
+    int branchStaffCount = allUsers.Count(u => u.StoreId.HasValue && u.StoreId.Value > 0);
 }
 
 <style>
-    /* Custom Scrollbar cho bảng */
-    .table-responsive::-webkit-scrollbar {
-        height: 8px;
+    /* Dark Executive Palette & Styling Tokens */
+    .deck-section-title {
+        font-size: 0.74rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
     }
 
-    .table-responsive::-webkit-scrollbar-thumb {
-        background-color: #cbd5e0;
-        border-radius: 4px;
+    .deck-section-title::after {
+        content: "";
+        flex-grow: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
     }
 
-    /* Style cho Avatar */
-    .avatar-circle {
-        width: 50px;
-        height: 50px;
+    /* Executive KPI Cards (Dark) */
+    .exec-kpi-card {
+        background: #131d33;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .exec-kpi-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .exec-kpi-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    /* Command / Control Panel (Dark) */
+    .control-deck-card {
+        background: #131d33;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 18px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+    }
+
+    .control-deck-header {
+        background: #0f172a;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .control-deck-body {
+        padding: 20px 24px;
+        background: #131d33;
+    }
+
+    /* Segmented Filter Pills (Dark) */
+    .segmented-control {
+        display: inline-flex;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 4px;
+        border-radius: 12px;
+        gap: 4px;
+    }
+
+    .segmented-pill {
+        border: none;
+        background: transparent;
+        padding: 7px 16px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #94a3b8;
+        border-radius: 9px;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+    }
+
+    .segmented-pill:hover {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .segmented-pill.active {
+        background: #2563eb;
+        color: #ffffff;
+        box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4);
+    }
+
+    .pill-counter {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 999px;
+    }
+
+    .segmented-pill.active .pill-counter {
+        background: rgba(0, 0, 0, 0.25);
+        color: #ffffff;
+    }
+
+    /* Presentation Deck Card (Dark) */
+    .presentation-deck-card {
+        background: #131d33;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 18px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+    }
+
+    .presentation-deck-header {
+        background: #0f172a;
+        padding: 18px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* Table & Rows (Dark) */
+    .table-exec thead th {
+        background: #0f172a !important;
+        color: #94a3b8 !important;
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 14px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        white-space: nowrap;
+    }
+
+    .table-exec tbody td {
+        padding: 16px 20px;
+        vertical-align: middle;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: #e2e8f0;
+    }
+
+    .user-record-row {
+        transition: background-color 0.15s ease;
+    }
+
+    .user-record-row:hover {
+        background-color: rgba(255, 255, 255, 0.04) !important;
+    }
+
+    /* User Avatar */
+    .exec-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .exec-avatar .crown-indicator {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background: #f59e0b;
+        color: #ffffff;
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 900;
-        font-size: 1.2rem;
-        color: white;
-        text-transform: uppercase;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        font-size: 0.65rem;
+        border: 2px solid #0f172a;
     }
 
-    /* Hiệu ứng dòng bảng */
-    .user-row {
-        transition: all 0.2s ease-in-out;
+    /* Branch Badges */
+    .badge-branch-hanoi {
+        background-color: rgba(14, 165, 233, 0.15);
+        color: #38bdf8;
+        border: 1px solid rgba(14, 165, 233, 0.3);
     }
 
-        .user-row:hover {
-            background-color: #f8f9fa !important;
-            transform: scale(1.002);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            z-index: 1;
-            position: relative;
-        }
-
-    /* Badge Hạng Thành Viên */
-    .rank-badge {
-        font-size: 0.7rem;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-weight: 700;
-        text-transform: uppercase;
-        display: inline-block;
-        min-width: 90px;
-        text-align: center;
-        border: 1px solid rgba(0,0,0,0.1);
-        margin-top: 4px;
+    .badge-branch-danang {
+        background-color: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.3);
     }
 
-    /* Style riêng cho từng Role */
-    .role-boss {
-        background: linear-gradient(135deg, #8B0000, #330000);
-        color: white;
-        border: 1px solid #ff3333;
+    .badge-branch-hcm {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
-    .role-admin {
-        background: linear-gradient(135deg, #0d6efd, #004085);
-        color: white;
-        border: 1px solid #0d6efd;
+    .badge-branch-hq {
+        background-color: rgba(244, 63, 94, 0.15);
+        color: #fb7185;
+        border: 1px solid rgba(244, 63, 94, 0.3);
     }
 
-    .role-user {
-        background: #e9ecef;
-        color: #495057;
-        border: 1px solid #ced4da;
-    }
-
-    .btn-action {
-        width: 32px;
-        height: 32px;
+    /* Action Buttons (Dark) */
+    .btn-action-exec {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border-radius: 50%;
-        transition: 0.2s;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+        color: #cbd5e1;
+        transition: all 0.15s ease;
     }
 
-        .btn-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-        }
+    .btn-action-exec:hover {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+        box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-action-delete:hover {
+        background: #ef4444 !important;
+        color: #ffffff !important;
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
+    }
+
+    /* Grid Cards (Dark) */
+    .user-card-item {
+        background: #1e293b;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 18px;
+        transition: all 0.2s ease;
+    }
+
+    .user-card-item:hover {
+        transform: translateY(-3px);
+        border-color: rgba(59, 130, 246, 0.4);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
 </style>
 
-<div class="container-fluid py-4">
+<div class="container-fluid px-0">
 
+    <!-- TOP HEADER: Page Title & Executive Actions -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <div>
-            <h4 class="fw-bold text-dark mb-1"><i class="bi bi-people-fill text-primary me-2"></i>Quản Lý Tài Khoản</h4>
-            <p class="text-muted small mb-0">Hiện có <strong>@Model.Count()</strong> thành viên trong hệ thống</p>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary text-white rounded-pill px-3 py-1 fw-bold" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                    <i class="bi bi-shield-lock-fill me-1"></i> WORKFLOW HR CONSOLE
+                </span>
+                <span class="text-muted small">&bull; Trạm kiểm soát nhân sự & Phân quyền</span>
+            </div>
+            <h3 class="fw-bold text-white mb-1" style="letter-spacing: -0.02em;">Quản Trị Người Dùng & Nhân Sự Toàn Chuỗi</h3>
+            <p class="text-muted small mb-0">Thiết lập tài khoản, phân quyền trưởng kho chi nhánh và cấu hình thứ hạng khách hàng</p>
         </div>
 
-        <div class="d-flex gap-3">
-            <div class="input-group shadow-sm" style="min-width: 300px;">
-                <span class="input-group-text bg-white border-end-0 ps-3"><i class="bi bi-search text-muted"></i></span>
-                <input type="text" id="searchUser" class="form-control border-start-0 ps-2" placeholder="Tìm tên, email, sđt...">
-            </div>
-            <a asp-action="ThemTaiKhoan" class="btn btn-primary fw-bold shadow-sm px-4 d-flex align-items-center">
-                <i class="bi bi-person-plus-fill me-2"></i> Thêm Mới
+        <div class="d-flex gap-2 align-items-center">
+            <button type="button" onclick="exportToCsv()" class="btn btn-outline-light rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2" style="font-size: 0.85rem; border-color: rgba(255,255,255,0.18);">
+                <i class="bi bi-file-earmark-excel text-success fs-6"></i>
+                <span>Xuất File Excel</span>
+            </button>
+            <a asp-action="ThemTaiKhoan" class="btn btn-primary rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 shadow" style="font-size: 0.88rem; background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);">
+                <i class="bi bi-person-plus-fill fs-6"></i>
+                <span>Thêm Tài Khoản Mới</span>
             </a>
         </div>
     </div>
 
+    <!-- FEEDBACK ALERTS -->
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i> @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-success alert-dismissible fade show rounded-4 border-0 shadow-sm d-flex align-items-center mb-4 text-white" role="alert" style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4) !important;">
+            <i class="bi bi-check-circle-fill fs-5 text-success me-3"></i>
+            <div><strong>Thao tác thành công:</strong> @TempData["Success"]</div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0 shadow-sm d-flex align-items-center mb-4 text-white" role="alert" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4) !important;">
+            <i class="bi bi-exclamation-triangle-fill fs-5 text-danger me-3"></i>
+            <div><strong>Thông báo hệ thống:</strong> @TempData["Error"]</div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="table-responsive">
-            <table class="table align-middle mb-0" id="userTable">
-                <thead class="bg-light text-secondary small text-uppercase fw-bold">
+    <!-- SECTION 1: EXECUTIVE KPI SUMMARY -->
+    <div class="deck-section-title">
+        <i class="bi bi-speedometer2 text-primary"></i> 1. Chỉ số điều hành tổng quan
+    </div>
+
+    <div class="row g-3 mb-4">
+        <!-- KPI 1: Tổng Thành Viên -->
+        <div class="col-xl-3 col-md-6">
+            <div class="exec-kpi-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.72rem; letter-spacing: 0.05em;">Tổng tài khoản</span>
+                    <div class="exec-kpi-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mb-2">
+                    <span class="fw-bolder text-white" style="font-size: 1.85rem; letter-spacing: -0.02em;">@totalCount</span>
+                    <span class="text-muted small">người dùng</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="badge rounded-pill px-2 py-1 small" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                        <i class="bi bi-shield-check"></i> Đang hoạt động
+                    </span>
+                    <span class="text-muted" style="font-size: 0.75rem;">Toàn chuỗi</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 2: Ban Quản Trị & Kho -->
+        <div class="col-xl-3 col-md-6">
+            <div class="exec-kpi-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.72rem; letter-spacing: 0.05em;">Ban điều hành & Quản lý</span>
+                    <div class="exec-kpi-icon" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mb-2">
+                    <span class="fw-bolder text-white" style="font-size: 1.85rem; letter-spacing: -0.02em;">@managerCount</span>
+                    <span class="text-muted small">nhân sự cấp cao</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="badge rounded-pill px-2 py-1 small" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">
+                        @bossCount Chủ tịch &bull; @adminCount Quản lý
+                    </span>
+                    <span class="text-muted" style="font-size: 0.75rem;">Quyền quản trị</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 3: Quản lý chi nhánh kho -->
+        <div class="col-xl-3 col-md-6">
+            <div class="exec-kpi-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.72rem; letter-spacing: 0.05em;">Trưởng kho chi nhánh</span>
+                    <div class="exec-kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">
+                        <i class="bi bi-shop-window"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mb-2">
+                    <span class="fw-bolder text-white" style="font-size: 1.85rem; letter-spacing: -0.02em;">@branchStaffCount</span>
+                    <span class="text-muted small">trưởng kho 3 miền</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="badge rounded-pill px-2 py-1 small" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">
+                        Hà Nội &bull; Đà Nẵng &bull; HCM
+                    </span>
+                    <span class="text-muted" style="font-size: 0.75rem;">3 Chi nhánh</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 4: Khách Hàng Thành Viên -->
+        <div class="col-xl-3 col-md-6">
+            <div class="exec-kpi-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.72rem; letter-spacing: 0.05em;">Khách hàng thành viên</span>
+                    <div class="exec-kpi-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                        <i class="bi bi-person-badge-fill"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline gap-2 mb-2">
+                    <span class="fw-bolder text-white" style="font-size: 1.85rem; letter-spacing: -0.02em;">@customerCount</span>
+                    <span class="text-muted small">khách mua sắm</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="badge rounded-pill px-2 py-1 small" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                        @(totalCount > 0 ? ((double)customerCount / totalCount * 100).ToString("0.0") : "0")% tổng tài khoản
+                    </span>
+                    <span class="text-muted" style="font-size: 0.75rem;">Cơ sở khách hàng</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: CONTROL DECK (BỘ ĐIỀU KHIỂN & LỌC DỮ LIỆU TẬP TRUNG) -->
+    <div class="deck-section-title">
+        <i class="bi bi-sliders text-primary"></i> 2. Phần điều khiển & Bộ lọc tập trung
+    </div>
+
+    <div class="control-deck-card mb-4">
+        <div class="control-deck-header flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-funnel-fill text-primary"></i>
+                <span class="fw-bold text-white" style="font-size: 0.9rem;">BỘ LỌC ĐIỀU HÀNH NHÂN SỰ</span>
+                <span class="badge rounded-pill px-2 py-1" style="background: rgba(255,255,255,0.08); color: #94a3b8; font-size: 0.72rem;">Live Filter Engine</span>
+            </div>
+
+            <!-- Segmented Role Quick Filter -->
+            <div class="segmented-control" id="rolePillFilter">
+                <button type="button" class="segmented-pill active" data-role="all">
+                    <span>Tất cả</span>
+                    <span class="pill-counter">@totalCount</span>
+                </button>
+                <button type="button" class="segmented-pill" data-role="manager">
+                    <i class="bi bi-shield-lock-fill text-danger"></i>
+                    <span>Ban Quản Trị</span>
+                    <span class="pill-counter">@managerCount</span>
+                </button>
+                <button type="button" class="segmented-pill" data-role="branch">
+                    <i class="bi bi-shop text-warning"></i>
+                    <span>Quản Lý Kho</span>
+                    <span class="pill-counter">@branchStaffCount</span>
+                </button>
+                <button type="button" class="segmented-pill" data-role="customer">
+                    <i class="bi bi-person-fill text-success"></i>
+                    <span>Khách Hàng</span>
+                    <span class="pill-counter">@customerCount</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="control-deck-body">
+            <div class="row g-3 align-items-center">
+                <!-- Search Input -->
+                <div class="col-lg-5 col-md-6">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Tìm kiếm đa trường</label>
+                    <div class="input-group border rounded-pill overflow-hidden shadow-sm p-1" style="background: #1e293b; border-color: rgba(255,255,255,0.12) !important;">
+                        <span class="input-group-text bg-transparent border-0 ps-3 text-secondary">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="masterSearchInput" class="form-control border-0 bg-transparent ps-2 text-white fw-medium" placeholder="Tìm theo tên, username, email, số điện thoại, địa chỉ...">
+                        <button type="button" id="clearSearchBtn" class="btn btn-link text-muted pe-3 text-decoration-none d-none" onclick="clearSearch()">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Store Filter Dropdown -->
+                <div class="col-lg-3 col-md-3 col-sm-6">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Chi nhánh phụ trách</label>
+                    <select id="storeSelectFilter" class="form-select border rounded-pill shadow-sm text-white fw-medium py-2">
+                        <option value="all">Tất cả chi nhánh & địa bàn</option>
+                        <option value="hq">Trụ sở chính (Toàn hệ thống)</option>
+                        <option value="1">Chi nhánh 1: Hà Nội</option>
+                        <option value="2">Chi nhánh 2: Đà Nẵng</option>
+                        <option value="3">Chi nhánh 3: TP.HCM</option>
+                    </select>
+                </div>
+
+                <!-- Tier Filter Dropdown -->
+                <div class="col-lg-2 col-md-3 col-sm-6">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.05em;">Hạng thành viên</label>
+                    <select id="tierSelectFilter" class="form-select border rounded-pill shadow-sm text-white fw-medium py-2">
+                        <option value="all">Tất cả thứ hạng</option>
+                        <option value="diamond">Hạng Kim Cương</option>
+                        <option value="platinum">Hạng Bạch Kim</option>
+                        <option value="gold">Hạng Vàng</option>
+                        <option value="silver">Hạng Bạc</option>
+                        <option value="standard">Thành Viên Chuẩn</option>
+                    </select>
+                </div>
+
+                <!-- Reset Filter Button -->
+                <div class="col-lg-2 col-md-12 d-flex align-items-end justify-content-lg-end mt-lg-4">
+                    <button type="button" onclick="resetAllFilters()" class="btn btn-dark border rounded-pill px-3 py-2 w-100 fw-semibold text-white d-flex align-items-center justify-content-center gap-2 shadow-sm" style="font-size: 0.85rem; border-color: rgba(255,255,255,0.15) !important;">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>Đặt lại bộ lọc</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Filter Status Bar -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center pt-3 mt-3 border-top" style="font-size: 0.82rem; border-color: rgba(255,255,255,0.08) !important;">
+                <div class="text-muted d-flex align-items-center gap-2">
+                    <span>Kết quả lọc:</span>
+                    <span class="badge bg-primary text-white rounded-pill px-3 py-1 fw-bold" id="matchingCountBadge">@totalCount</span>
+                    <span class="text-secondary">trên tổng số <strong>@totalCount</strong> tài khoản</span>
+                </div>
+                <div class="text-muted small">
+                    <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Tìm kiếm theo thời gian thực (Instant Query)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: PRESENTATION DECK (PHẦN HIỂN THỊ DỮ LIỆU) -->
+    <div class="deck-section-title">
+        <i class="bi bi-table text-primary"></i> 3. Phần hiển thị dữ liệu nhân sự & Thành viên
+    </div>
+
+    <div class="presentation-deck-card">
+        <!-- Presentation Header Toolbar -->
+        <div class="presentation-deck-header flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-card-checklist text-primary"></i>
+                    <span>Danh Sách Hồ Sơ Người Dùng</span>
+                </h5>
+                <span class="text-muted small">Dữ liệu thời gian thực từ cơ sở dữ liệu hệ thống</span>
+            </div>
+
+            <!-- Display Controls -->
+            <div class="d-flex align-items-center gap-2">
+                <div class="btn-group p-1 rounded-pill border" role="group" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1) !important;">
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold active shadow-sm" id="viewModeTableBtn" onclick="setViewMode('table')">
+                        <i class="bi bi-list-ul me-1"></i> Bảng
+                    </button>
+                    <button type="button" class="btn btn-sm btn-transparent rounded-pill px-3 text-muted fw-semibold" id="viewModeGridBtn" onclick="setViewMode('grid')">
+                        <i class="bi bi-grid-fill me-1"></i> Lưới Thẻ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. TABLE VIEW -->
+        <div id="tableViewContainer" class="table-responsive">
+            <table class="table table-exec align-middle mb-0" id="userMasterTable">
+                <thead>
                     <tr>
-                        <th class="ps-4 py-3">Thành viên</th>
-                        <th>Vai trò & Hạng</th>
-                        <th>Chi nhánh (Store)</th>
-                        <th>Liên hệ</th>
-                        <th>Thông tin khác</th>
+                        <th class="ps-4">Thành viên & Định danh</th>
+                        <th>Phân quyền & Cấp bậc</th>
+                        <th>Địa bàn phụ trách (Store)</th>
+                        <th>Kênh liên hệ</th>
+                        <th>Địa chỉ & Ngày sinh</th>
                         <th class="text-end pe-4">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @if (Model != null && Model.Any())
+                <tbody id="userTableBody">
+                    @if (allUsers.Any())
                     {
-                        foreach (var item in Model)
+                        foreach (var item in allUsers)
                         {
-                            // 1. Lấy thông tin Hạng
                             var tier = MemberService.GetUserTier(item.Username);
-
-                            // 2. Màu Avatar
                             string firstLetter = !string.IsNullOrEmpty(item.FullName) ? item.FullName.Substring(0, 1).ToUpper() : "U";
-                            string avatarBg = "#6c757d";
-                            if (item.Role == "Boss") avatarBg = "linear-gradient(45deg, #8B0000, #FF0000)";
-                            else if (item.Role == "Admin") avatarBg = "linear-gradient(45deg, #0d6efd, #004085)";
-                            else avatarBg = "#198754"; // User xanh lá
 
-                            <tr class="user-row border-bottom">
+                            // Setup Avatar & Role Colors
+                            string avatarGradient;
+                            string roleBadgeHtml;
+                            string roleCategory;
+
+                            if (item.Role == "Boss")
+                            {
+                                avatarGradient = "linear-gradient(135deg, #be123c 0%, #4c0519 100%)";
+                                roleBadgeHtml = "<span class='badge bg-danger rounded-pill px-3 py-1 fw-bold text-uppercase border border-danger-subtle d-inline-flex align-items-center gap-1'><i class='bi bi-crown-fill text-warning'></i> Chủ tịch (Boss)</span>";
+                                roleCategory = "boss manager";
+                            }
+                            else if (item.Role == "Admin")
+                            {
+                                avatarGradient = "linear-gradient(135deg, #1d4ed8 0%, #172554 100%)";
+                                roleBadgeHtml = "<span class='badge bg-primary rounded-pill px-3 py-1 fw-bold text-uppercase border border-primary-subtle d-inline-flex align-items-center gap-1'><i class='bi bi-shield-check'></i> Quản lý kho</span>";
+                                roleCategory = "admin manager branch";
+                            }
+                            else
+                            {
+                                avatarGradient = "linear-gradient(135deg, #059669 0%, #064e3b 100%)";
+                                roleBadgeHtml = "<span class='badge rounded-pill px-3 py-1 fw-bold text-uppercase border d-inline-flex align-items-center gap-1' style='background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3) !important;'><i class='bi bi-person-fill'></i> Khách hàng</span>";
+                                roleCategory = "customer";
+                            }
+
+                            // Store Branch Info
+                            string storeBadgeHtml;
+                            string storeCategory;
+                            if (item.Role == "Boss")
+                            {
+                                storeBadgeHtml = "<span class='badge badge-branch-hq rounded-pill px-3 py-1 fw-semibold'><i class='bi bi-globe me-1'></i> Toàn hệ thống</span>";
+                                storeCategory = "hq";
+                            }
+                            else if (item.StoreId == 1)
+                            {
+                                storeBadgeHtml = "<span class='badge badge-branch-hanoi rounded-pill px-3 py-1 fw-semibold'><i class='bi bi-geo-alt-fill me-1'></i> Kho Hà Nội</span>";
+                                storeCategory = "1 branch";
+                            }
+                            else if (item.StoreId == 2)
+                            {
+                                storeBadgeHtml = "<span class='badge badge-branch-danang rounded-pill px-3 py-1 fw-semibold'><i class='bi bi-geo-alt-fill me-1'></i> Kho Đà Nẵng</span>";
+                                storeCategory = "2 branch";
+                            }
+                            else if (item.StoreId == 3)
+                            {
+                                storeBadgeHtml = "<span class='badge badge-branch-hcm rounded-pill px-3 py-1 fw-semibold'><i class='bi bi-geo-alt-fill me-1'></i> Kho TP.HCM</span>";
+                                storeCategory = "3 branch";
+                            }
+                            else
+                            {
+                                storeBadgeHtml = "<span class='text-muted small'>Trực tuyến (Online)</span>";
+                                storeCategory = "none";
+                            }
+
+                            // Tier Category identifier
+                            string tierCategory = "standard";
+                            if (tier.Name.Contains("Kim Cương") || tier.Name.Contains("Diamond")) tierCategory = "diamond";
+                            else if (tier.Name.Contains("Bạch Kim") || tier.Name.Contains("Platinum")) tierCategory = "platinum";
+                            else if (tier.Name.Contains("Vàng") || tier.Name.Contains("Gold")) tierCategory = "gold";
+                            else if (tier.Name.Contains("Bạc") || tier.Name.Contains("Silver")) tierCategory = "silver";
+
+                            <tr class="user-record-row"
+                                data-fullname="@item.FullName"
+                                data-username="@item.Username"
+                                data-email="@item.Email"
+                                data-phone="@item.PhoneNumber"
+                                data-address="@item.Address"
+                                data-role="@roleCategory"
+                                data-store="@storeCategory"
+                                data-tier="@tierCategory">
+                                
+                                <!-- 1. Member Profile & Identity -->
                                 <td class="ps-4 py-3">
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-circle me-3" style="background: @avatarBg;">@firstLetter</div>
+                                        <div class="exec-avatar me-3" style="background: @avatarGradient;">
+                                            @firstLetter
+                                            @if (item.Role == "Boss")
+                                            {
+                                                <span class="crown-indicator" title="Chủ tịch hệ thống"><i class="bi bi-crown-fill"></i></span>
+                                            }
+                                        </div>
                                         <div>
-                                            <div class="fw-bold text-dark fs-6">@item.FullName</div>
-                                            <div class="small text-muted font-monospace">@item.Username</div>
+                                            <div class="fw-bold text-white fs-6 lh-1 mb-1">@item.FullName</div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge border font-monospace px-2 py-0" style="font-size: 0.72rem; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12) !important; color: #cbd5e1;">@item.Username</span>
+                                                <span class="text-muted" style="font-size: 0.7rem;">ID: #@item.Id</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
 
+                                <!-- 2. Role & Tier -->
                                 <td>
                                     <div class="mb-1">
-                                        @if (item.Role == "Boss")
+                                        @Html.Raw(roleBadgeHtml)
+                                    </div>
+                                    <div class="d-inline-block">
+                                        <span class="badge @tier.CssClass rounded-pill px-2 py-1" style="font-size: 0.72rem; letter-spacing: 0.04em;">
+                                            <i class="bi bi-gem me-1"></i>@tier.Name
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <!-- 3. Branch / Store Location -->
+                                <td>
+                                    @Html.Raw(storeBadgeHtml)
+                                </td>
+
+                                <!-- 4. Contacts -->
+                                <td>
+                                    <div class="d-flex flex-column gap-1">
+                                        <div class="small text-white fw-medium d-flex align-items-center gap-1 cursor-pointer" onclick="copyText('@item.Email', 'Đã sao chép email')" title="Click để copy email">
+                                            <i class="bi bi-envelope text-primary"></i>
+                                            <span>@item.Email</span>
+                                        </div>
+                                        <div class="small text-muted d-flex align-items-center gap-1">
+                                            <i class="bi bi-telephone text-success"></i>
+                                            <span>@(item.PhoneNumber ?? "---")</span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- 5. Address & DoB -->
+                                <td class="small">
+                                    <div class="text-truncate text-secondary mb-1" style="max-width: 200px;" title="@item.Address">
+                                        <i class="bi bi-geo-alt text-danger me-1"></i> @(item.Address ?? "Chưa cập nhật")
+                                    </div>
+                                    <div class="text-muted" style="font-size: 0.74rem;">
+                                        <i class="bi bi-calendar3 me-1"></i> @(item.DateOfBirth.HasValue ? item.DateOfBirth.Value.ToString("dd/MM/yyyy") : "---")
+                                    </div>
+                                </td>
+
+                                <!-- 6. Executive Action Control Hub -->
+                                <td class="text-end pe-4">
+                                    <div class="d-inline-flex gap-1">
+                                        <a asp-action="SuaTaiKhoan" asp-route-id="@item.Id" class="btn-action-exec" title="Chỉnh sửa tài khoản">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </a>
+
+                                        @if (item.Role != "Boss" && item.Username != User.Identity.Name)
                                         {
-                                            <span class="badge bg-danger text-uppercase border border-danger">
-                                                <i class="bi bi-crown-fill me-1"></i> BOSS (CHỦ TỊCH)
-                                            </span>
-                                        }
-                                        else if (item.Role == "Admin")
-                                        {
-                                            <span class="badge bg-primary text-uppercase border border-primary">
-                                                <i class="bi bi-shield-check me-1"></i> QUẢN LÝ
-                                            </span>
+                                            <form asp-action="XoaTaiKhoan" asp-route-id="@item.Id" method="post" class="d-inline m-0" onsubmit="return confirm('CẢNH BÁO NHÀ QUẢN TRỊ: Bạn có chắc chắn muốn xóa tài khoản này không?');">
+                                                <button type="submit" class="btn-action-exec btn-action-delete" title="Xóa tài khoản khỏi hệ thống">
+                                                    <i class="bi bi-trash3-fill"></i>
+                                                </button>
+                                            </form>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-success bg-opacity-10 text-success border border-success">
-                                                <i class="bi bi-person-fill me-1"></i> KHÁCH HÀNG
+                                            <span class="btn-action-exec opacity-50 cursor-not-allowed text-muted" title="Tài khoản được bảo vệ, không thể xóa">
+                                                <i class="bi bi-lock-fill"></i>
                                             </span>
                                         }
                                     </div>
-                                    <div class="rank-badge @tier.CssClass">@tier.Name</div>
-                                </td>
-
-                                <td>
-                                    @if (item.Role == "Boss")
-                                    {
-                                        <span class="text-danger fw-bold small"><i class="bi bi-globe me-1"></i> Toàn hệ thống</span>
-                                    }
-                                    else if (item.StoreId == 1)
-                                    {
-                                        <span class="badge bg-info text-dark">Hà Nội</span>
-                                    }
-                                    else if (item.StoreId == 2)
-                                    {
-                                        <span class="badge bg-warning text-dark">Đà Nẵng</span>
-                                    }
-                                    else if (item.StoreId == 3)
-                                    {
-                                        <span class="badge bg-success">TP.HCM</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted small">---</span>
-                                    }
-                                </td>
-
-                                <td>
-                                    <div class="d-flex flex-column gap-1">
-                                        <div class="text-dark small"><i class="bi bi-envelope-at me-2 text-primary"></i> @item.Email</div>
-                                        <div class="text-dark small"><i class="bi bi-telephone me-2 text-success"></i> @(item.PhoneNumber ?? "---")</div>
-                                    </div>
-                                </td>
-
-                                <td class="small text-muted">
-                                    <div class="mb-1 text-truncate" style="max-width: 150px;" title="@item.Address">
-                                        <i class="bi bi-geo-alt me-1 text-danger"></i> @(item.Address ?? "Chưa cập nhật")
-                                    </div>
-                                    <div>
-                                        <i class="bi bi-cake2 me-1 text-warning"></i> @(item.DateOfBirth.HasValue ? item.DateOfBirth.Value.ToString("dd/MM/yyyy") : "---")
-                                    </div>
-                                </td>
-
-                                <td class="text-end pe-4">
-                                    <a asp-action="SuaTaiKhoan" asp-route-id="@item.Id" class="btn-action btn-light text-primary me-1" title="Chỉnh sửa">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
-
-                                    @if (item.Role != "Boss" && item.Username != User.Identity.Name)
-                                    {
-                                        <form asp-action="XoaTaiKhoan" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa tài khoản này không?');">
-                                            <button type="submit" class="btn-action btn-light text-danger border-0" title="Xóa tài khoản">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    }
                                 </td>
                             </tr>
                         }
                     }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
-                                <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" width="80" class="mb-3 opacity-50" />
-                                <p class="mb-0">Không tìm thấy tài khoản nào phù hợp.</p>
-                            </td>
-                        </tr>
-                    }
                 </tbody>
             </table>
+        </div>
+
+        <!-- 2. GRID CARDS VIEW (Dark mode) -->
+        <div id="gridViewContainer" class="p-4 d-none">
+            <div class="row g-3" id="userGridCardDeck"></div>
+        </div>
+
+        <!-- EMPTY STATE (WHEN FILTERS FIND 0 ROWS) -->
+        <div id="noResultsState" class="text-center py-5 d-none">
+            <div class="p-4 rounded-circle d-inline-flex mb-3 text-secondary" style="width: 80px; height: 80px; align-items: center; justify-content: center; font-size: 2.2rem; background: rgba(255,255,255,0.06);">
+                <i class="bi bi-search"></i>
+            </div>
+            <h5 class="fw-bold text-white mb-1">Không tìm thấy tài khoản phù hợp</h5>
+            <p class="text-muted small mb-3">Vui lòng kiểm tra lại từ khóa tìm kiếm hoặc làm mới bộ lọc để hiển thị toàn bộ danh sách.</p>
+            <button type="button" onclick="resetAllFilters()" class="btn btn-outline-light rounded-pill px-4 py-2 fw-semibold btn-sm">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Đặt lại bộ lọc
+            </button>
+        </div>
+
+        <!-- PRESENTATION FOOTER -->
+        <div class="p-3 border-top d-flex flex-wrap justify-content-between align-items-center" style="font-size: 0.82rem; background: #0f172a; border-color: rgba(255,255,255,0.08) !important;">
+            <div class="text-muted">
+                Bảo vệ bởi phân quyền cấp quản trị viên cao cấp (Boss Authorization Engine).
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <a href="javascript:void(0)" onclick="window.print()" class="text-secondary text-decoration-none fw-semibold">
+                    <i class="bi bi-printer me-1"></i> In danh sách
+                </a>
+                <span class="text-muted">&bull;</span>
+                <span class="text-white fw-bold" id="footerTotalDisplay">Hiển thị @totalCount tài khoản</span>
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-    document.getElementById('searchUser').addEventListener('keyup', function() {
-        let searchText = this.value.toLowerCase();
-        let rows = document.querySelectorAll('#userTable tbody tr');
-        rows.forEach(row => {
-            let text = row.innerText.toLowerCase();
-            row.style.display = text.includes(searchText) ? '' : 'none';
+<!-- Copy Toast Notification -->
+<div id="copyToast" class="position-fixed bottom-0 end-0 p-3" style="z-index: 99999; display: none;">
+    <div class="toast align-items-center text-white bg-dark border border-primary show shadow-lg" role="alert" style="background: #1e293b !important;">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center" id="copyToastMessage">
+                <i class="bi bi-clipboard-check-fill text-success fs-5 me-2"></i> Đã sao chép!
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const filterState = {
+            role: 'all',
+            search: '',
+            store: 'all',
+            tier: 'all'
+        };
+
+        let currentViewMode = 'table';
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById('masterSearchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const storeSelect = document.getElementById('storeSelectFilter');
+            const tierSelect = document.getElementById('tierSelectFilter');
+            const rolePills = document.querySelectorAll('#rolePillFilter .segmented-pill');
+
+            rolePills.forEach(pill => {
+                pill.addEventListener('click', function () {
+                    rolePills.forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                    filterState.role = this.getAttribute('data-role');
+                    applyMasterFilters();
+                });
+            });
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    filterState.search = this.value.trim().toLowerCase();
+                    if (clearBtn) {
+                        clearBtn.classList.toggle('d-none', this.value.length === 0);
+                    }
+                    applyMasterFilters();
+                });
+            }
+
+            if (storeSelect) {
+                storeSelect.addEventListener('change', function () {
+                    filterState.store = this.value;
+                    applyMasterFilters();
+                });
+            }
+
+            if (tierSelect) {
+                tierSelect.addEventListener('change', function () {
+                    filterState.tier = this.value;
+                    applyMasterFilters();
+                });
+            }
+
+            buildGridCards();
         });
-    });
-</script>
+
+        function applyMasterFilters() {
+            const rows = document.querySelectorAll('#userTableBody .user-record-row');
+            let matchCount = 0;
+
+            rows.forEach(row => {
+                const fullName = (row.getAttribute('data-fullname') || '').toLowerCase();
+                const username = (row.getAttribute('data-username') || '').toLowerCase();
+                const email = (row.getAttribute('data-email') || '').toLowerCase();
+                const phone = (row.getAttribute('data-phone') || '').toLowerCase();
+                const address = (row.getAttribute('data-address') || '').toLowerCase();
+                const role = (row.getAttribute('data-role') || '');
+                const store = (row.getAttribute('data-store') || '');
+                const tier = (row.getAttribute('data-tier') || '');
+
+                let matchSearch = true;
+                if (filterState.search) {
+                    const combined = `${fullName} ${username} ${email} ${phone} ${address}`;
+                    matchSearch = combined.includes(filterState.search);
+                }
+
+                let matchRole = true;
+                if (filterState.role !== 'all') {
+                    matchRole = role.includes(filterState.role);
+                }
+
+                let matchStore = true;
+                if (filterState.store !== 'all') {
+                    matchStore = store.includes(filterState.store);
+                }
+
+                let matchTier = true;
+                if (filterState.tier !== 'all') {
+                    matchTier = tier === filterState.tier;
+                }
+
+                const isVisible = matchSearch && matchRole && matchStore && matchTier;
+                row.style.display = isVisible ? '' : 'none';
+
+                if (isVisible) matchCount++;
+            });
+
+            const countBadge = document.getElementById('matchingCountBadge');
+            const footerTotal = document.getElementById('footerTotalDisplay');
+            const noResultsState = document.getElementById('noResultsState');
+            const tableContainer = document.getElementById('tableViewContainer');
+            const gridContainer = document.getElementById('gridViewContainer');
+
+            if (countBadge) countBadge.innerText = matchCount;
+            if (footerTotal) footerTotal.innerText = `Hiển thị ${matchCount} tài khoản`;
+
+            if (matchCount === 0) {
+                noResultsState.classList.remove('d-none');
+                if (tableContainer) tableContainer.classList.add('d-none');
+                if (gridContainer) gridContainer.classList.add('d-none');
+            } else {
+                noResultsState.classList.add('d-none');
+                if (currentViewMode === 'table') {
+                    if (tableContainer) tableContainer.classList.remove('d-none');
+                } else {
+                    if (gridContainer) gridContainer.classList.remove('d-none');
+                }
+            }
+
+            syncGridCardVisibility();
+        }
+
+        function clearSearch() {
+            const searchInput = document.getElementById('masterSearchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (searchInput) searchInput.value = '';
+            if (clearBtn) clearBtn.classList.add('d-none');
+            filterState.search = '';
+            applyMasterFilters();
+        }
+
+        function resetAllFilters() {
+            clearSearch();
+            const storeSelect = document.getElementById('storeSelectFilter');
+            const tierSelect = document.getElementById('tierSelectFilter');
+            const rolePills = document.querySelectorAll('#rolePillFilter .segmented-pill');
+
+            if (storeSelect) storeSelect.value = 'all';
+            if (tierSelect) tierSelect.value = 'all';
+            filterState.store = 'all';
+            filterState.tier = 'all';
+
+            rolePills.forEach(p => p.classList.remove('active'));
+            if (rolePills[0]) {
+                rolePills[0].classList.add('active');
+                filterState.role = 'all';
+            }
+
+            applyMasterFilters();
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            const tableContainer = document.getElementById('tableViewContainer');
+            const gridContainer = document.getElementById('gridViewContainer');
+            const btnTable = document.getElementById('viewModeTableBtn');
+            const btnGrid = document.getElementById('viewModeGridBtn');
+
+            if (mode === 'table') {
+                btnTable.classList.add('active', 'btn-primary', 'shadow-sm');
+                btnTable.classList.remove('btn-transparent', 'text-muted');
+                btnGrid.classList.remove('active', 'btn-primary', 'shadow-sm');
+                btnGrid.classList.add('btn-transparent', 'text-muted');
+
+                tableContainer.classList.remove('d-none');
+                gridContainer.classList.add('d-none');
+            } else {
+                btnGrid.classList.add('active', 'btn-primary', 'shadow-sm');
+                btnGrid.classList.remove('btn-transparent', 'text-muted');
+                btnTable.classList.remove('active', 'btn-primary', 'shadow-sm');
+                btnTable.classList.add('btn-transparent', 'text-muted');
+
+                gridContainer.classList.remove('d-none');
+                tableContainer.classList.add('d-none');
+            }
+            applyMasterFilters();
+        }
+
+        function buildGridCards() {
+            const rows = document.querySelectorAll('#userTableBody .user-record-row');
+            const gridDeck = document.getElementById('userGridCardDeck');
+            if (!gridDeck) return;
+
+            gridDeck.innerHTML = '';
+            rows.forEach((row, idx) => {
+                const name = row.getAttribute('data-fullname');
+                const username = row.getAttribute('data-username');
+                const email = row.getAttribute('data-email');
+                const phone = row.getAttribute('data-phone');
+                const address = row.getAttribute('data-address');
+                const roleBadge = row.querySelector('td:nth-child(2)').innerHTML;
+                const storeBadge = row.querySelector('td:nth-child(3)').innerHTML;
+                const actionsHtml = row.querySelector('td:nth-child(6)').innerHTML;
+                const avatarBg = row.querySelector('.exec-avatar').style.background;
+                const initial = row.querySelector('.exec-avatar').innerText.trim().charAt(0);
+
+                const cardHtml = `
+                    <div class="col-xl-4 col-md-6 user-grid-item" data-idx="${idx}">
+                        <div class="user-card-item h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="exec-avatar" style="background: ${avatarBg}; width: 48px; height: 48px; font-size: 1.25rem;">
+                                            ${initial}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-white fs-6">${name}</div>
+                                            <div class="badge font-monospace px-2 py-0" style="font-size: 0.72rem; background: rgba(255,255,255,0.06); color: #cbd5e1;">${username}</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-1">${actionsHtml}</div>
+                                </div>
+                                <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+                                    ${roleBadge}
+                                    ${storeBadge}
+                                </div>
+                                <div class="p-3 rounded-3 small" style="background: rgba(0,0,0,0.25);">
+                                    <div class="text-white mb-1"><i class="bi bi-envelope text-primary me-2"></i> ${email}</div>
+                                    <div class="text-white mb-1"><i class="bi bi-telephone text-success me-2"></i> ${phone || '---'}</div>
+                                    <div class="text-muted text-truncate" title="${address}"><i class="bi bi-geo-alt text-danger me-2"></i> ${address || 'Chưa cập nhật'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                gridDeck.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        function syncGridCardVisibility() {
+            const rows = document.querySelectorAll('#userTableBody .user-record-row');
+            const gridItems = document.querySelectorAll('#userGridCardDeck .user-grid-item');
+
+            rows.forEach((row, idx) => {
+                const isVisible = row.style.display !== 'none';
+                if (gridItems[idx]) {
+                    gridItems[idx].style.display = isVisible ? '' : 'none';
+                }
+            });
+        }
+
+        function exportToCsv() {
+            const rows = document.querySelectorAll('#userTableBody .user-record-row');
+            let csvContent = "\uFEFF";
+            csvContent += "Họ và Tên,Tên đăng nhập (Username),Vai trò,Hạng thành viên,Chi nhánh kho,Email,Số điện thoại,Địa chỉ\n";
+
+            let count = 0;
+            rows.forEach(row => {
+                if (row.style.display !== 'none') {
+                    const name = `"${row.getAttribute('data-fullname') || ''}"`;
+                    const username = `"${row.getAttribute('data-username') || ''}"`;
+                    const role = `"${row.querySelector('td:nth-child(2) span')?.innerText.trim() || ''}"`;
+                    const tier = `"${row.querySelector('td:nth-child(2) .badge:last-child')?.innerText.trim() || ''}"`;
+                    const store = `"${row.querySelector('td:nth-child(3)')?.innerText.trim() || ''}"`;
+                    const email = `"${row.getAttribute('data-email') || ''}"`;
+                    const phone = `"${row.getAttribute('data-phone') || ''}"`;
+                    const address = `"${(row.getAttribute('data-address') || '').replace(/"/g, '""')}"`;
+
+                    csvContent += `${name},${username},${role},${tier},${store},${email},${phone},${address}\n`;
+                    count++;
+                }
+            });
+
+            if (count === 0) {
+                alert("Không có tài khoản nào phù hợp để xuất file!");
+                return;
+            }
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `DanhSach_NhanSu_SmartTech_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function copyText(text, message) {
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('copyToast');
+                const toastMsg = document.getElementById('copyToastMessage');
+                if (toast && toastMsg) {
+                    toastMsg.innerHTML = `<i class="bi bi-clipboard-check-fill text-success fs-5 me-2"></i> ${message}: <strong>${text}</strong>`;
+                    toast.style.display = 'block';
+                    setTimeout(() => { toast.style.display = 'none'; }, 2500);
+                }
+            });
+        }
+    </script>
+}

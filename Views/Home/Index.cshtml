@@ -1,4 +1,4 @@
-﻿@using banthietbidientu.Data
+@using banthietbidientu.Data
 @using banthietbidientu.Models
 @inject ApplicationDbContext _context
 @{
@@ -30,10 +30,22 @@
             z-index: 100040 !important;
         }
 
-        /* 2. CSS CAROUSEL BANNER MỚI */
+        /* 2. CSS CAROUSEL BANNER MỚI (Apple Style) */
+        .carousel-banner-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .carousel-banner-inner {
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.1);
+        }
+
         .carousel-item {
-            height: 500px; /* Chiều cao banner */
-            background-color: #000;
+            height: 480px;
+            background-color: #0b0f19;
             position: relative;
         }
 
@@ -41,87 +53,102 @@
                 object-fit: cover;
                 height: 100%;
                 width: 100%;
-                opacity: 0.7; /* Làm tối ảnh nền để chữ nổi bật */
-                filter: brightness(0.9);
+                opacity: 0.85;
+                filter: brightness(0.95);
             }
 
-        /* Hiệu ứng Gradient phủ lên ảnh để text dễ đọc hơn */
         .carousel-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 100%);
+            background: linear-gradient(90deg, rgba(11, 15, 25, 0.85) 0%, rgba(11, 15, 25, 0.4) 60%, rgba(11, 15, 25, 0) 100%);
         }
 
-        .carousel-caption {
-            bottom: 35%;
-            left: 10%;
-            right: auto;
-            text-align: left;
+        .carousel-caption-glass {
+            position: absolute;
+            bottom: 50%;
+            transform: translateY(50%);
+            left: 5%;
             z-index: 2;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            max-width: 600px;
+            max-width: 580px;
+            text-align: left;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 2.25rem 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
         }
 
-            .carousel-caption h1 {
-                font-weight: 900;
-                font-size: 3.5rem;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                margin-bottom: 1rem;
-                line-height: 1.2;
+            .carousel-caption-glass h1 {
+                font-weight: 800;
+                font-size: 2.5rem;
+                letter-spacing: -0.02em;
+                margin-bottom: 0.75rem;
+                line-height: 1.15;
+                color: #ffffff;
             }
 
-            .carousel-caption p {
-                font-size: 1.3rem;
+            .carousel-caption-glass p {
+                font-size: 1.05rem;
                 font-weight: 400;
-                margin-bottom: 2rem;
-                opacity: 0.9;
+                margin-bottom: 1.5rem;
+                color: #e2e8f0;
+                line-height: 1.5;
             }
 
         .btn-hero {
-            padding: 12px 40px;
+            background: #ffffff;
+            color: #0f172a !important;
+            padding: 0.75rem 2rem;
             font-weight: 700;
-            border-radius: 50px;
-            text-transform: uppercase;
-            font-size: 1rem;
-            transition: all 0.3s ease;
+            border-radius: 999px;
+            font-size: 0.95rem;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             border: none;
-            position: relative;
-            z-index: 10;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
         }
 
             .btn-hero:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(255,255,255,0.3);
+                background: #f8fafc;
+                color: #000000 !important;
             }
 
         /* 3. CSS Product Card */
         .product-card-hover {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: none;
-            border-radius: 15px;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 20px;
             overflow: hidden;
-            background: white;
+            background: #ffffff;
             position: relative;
             z-index: 1;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
         }
 
             .product-card-hover:hover {
                 transform: translateY(-5px);
-                box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+                box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.1) !important;
+                border-color: rgba(15, 23, 42, 0.16);
                 z-index: 10;
             }
 
         .product-img-container {
-            height: 250px;
+            height: 230px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #fff;
-            padding: 20px;
+            background-color: #f8fafc;
+            padding: 24px;
             position: relative;
         }
 
@@ -129,17 +156,17 @@
                 max-height: 100%;
                 max-width: 100%;
                 object-fit: contain;
-                transition: transform 0.5s;
+                transition: transform 0.4s ease;
             }
 
         .product-card-hover:hover .product-img-container img {
-            transform: scale(1.05);
+            transform: scale(1.06);
         }
 
         .badge-overlay {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 12px;
+            right: 12px;
             z-index: 5;
         }
 
@@ -223,20 +250,20 @@
     </style>
 }
 
-<div class="container-fluid p-0 mb-5">
-    <div id="smartTechCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+<div class="carousel-banner-wrapper my-4">
+    <div id="smartTechCarousel" class="carousel slide carousel-fade carousel-banner-inner" data-bs-ride="carousel" data-bs-interval="6000">
 
-        <div class="carousel-indicators">
+        <div class="carousel-indicators mb-3">
             @if (listBanners != null && listBanners.Any())
             {
                 for (int i = 0; i < listBanners.Count; i++)
                 {
-                    <button type="button" data-bs-target="#smartTechCarousel" data-bs-slide-to="@i" class="@(i == 0 ? "active" : "")"></button>
+                    <button type="button" data-bs-target="#smartTechCarousel" data-bs-slide-to="@i" class="@(i == 0 ? "active" : "") rounded-pill" style="width: 28px; height: 4px;"></button>
                 }
             }
         </div>
 
-        <div class="carousel-inner rounded-bottom-5 shadow-sm overflow-hidden" style="border-radius: 0 0 50px 50px;">
+        <div class="carousel-inner">
             @if (listBanners != null && listBanners.Any())
             {
                 for (int i = 0; i < listBanners.Count; i++)
@@ -246,15 +273,17 @@
                         <img src="@banner.ImageUrl" alt="@banner.Title">
                         <div class="carousel-overlay"></div>
 
-                        <div class="carousel-caption">
-                            <h1 class="text-white">@banner.Title</h1>
+                        <div class="carousel-caption-glass">
+                            <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-bold text-uppercase mb-3" style="font-size: 0.72rem; letter-spacing: 0.05em;">SmartTech Special</span>
+                            <h1>@banner.Title</h1>
                             @if (!string.IsNullOrEmpty(banner.Description))
                             {
                                 <p>@banner.Description</p>
                             }
                             <a href="@(string.IsNullOrEmpty(banner.LinkUrl) ? "#products" : banner.LinkUrl)"
-                               class="btn btn-primary btn-hero text-white">
-                                @(string.IsNullOrEmpty(banner.ButtonText) ? "Xem ngay" : banner.ButtonText)
+                               class="btn-hero">
+                                <span>@(string.IsNullOrEmpty(banner.ButtonText) ? "Khám phá ngay" : banner.ButtonText)</span>
+                                <i class="bi bi-arrow-right"></i>
                             </a>
                         </div>
                     </div>
@@ -263,34 +292,90 @@
             else
             {
                 <div class="carousel-item active">
-                    <img src="https://via.placeholder.com/1600x600?text=No+Banner+Available" alt="Default">
+                    <img src="https://via.placeholder.com/1600x600?text=SmartTech+Flagship" alt="Default">
                     <div class="carousel-overlay"></div>
-                    <div class="carousel-caption">
-                        <h1 class="text-white">Chào mừng đến với SmartTech</h1>
-                        <p>Hiện chưa có banner nào được kích hoạt.</p>
+                    <div class="carousel-caption-glass">
+                        <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-bold text-uppercase mb-3" style="font-size: 0.72rem;">SmartTech Store</span>
+                        <h1>Trải nghiệm công nghệ đỉnh cao</h1>
+                        <p>Hệ thống phân phối thiết bị điện tử chính hãng với ưu đãi đặc quyền.</p>
+                        <a href="#products" class="btn-hero">
+                            <span>Khám phá ngay</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
                     </div>
                 </div>
             }
         </div>
 
-        <button class="carousel-control-prev" type="button" data-bs-target="#smartTechCarousel" data-bs-slide="prev">
+        <button class="carousel-control-prev" type="button" data-bs-target="#smartTechCarousel" data-bs-slide="prev" aria-label="Previous">
             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
         </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#smartTechCarousel" data-bs-slide="next">
+        <button class="carousel-control-next" type="button" data-bs-target="#smartTechCarousel" data-bs-slide="next" aria-label="Next">
             <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
         </button>
     </div>
 </div>
 
-<div class="container my-5" id="products">
-    <div class="d-flex justify-content-between align-items-center mb-4 border-start border-5 border-primary ps-3">
-        <h2 class="fw-bold text-dark m-0">Tất cả sản phẩm</h2>
+<!-- 4 Value Props (Apple Style) -->
+<div class="container my-5">
+    <div class="row g-3">
+        <div class="col-6 col-lg-3">
+            <div class="p-3 p-md-4 rounded-4 bg-white d-flex align-items-center gap-3 border" style="border-color: rgba(15, 23, 42, 0.06) !important; box-shadow: 0 1px 3px rgba(15,23,42,0.03);">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px; background: #eff6ff; color: #2563eb;">
+                    <i class="bi bi-lightning-charge fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.92rem;">Giao siêu tốc 2H</h6>
+                    <small class="text-muted" style="font-size: 0.78rem;">Nội thành các chi nhánh</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="p-3 p-md-4 rounded-4 bg-white d-flex align-items-center gap-3 border" style="border-color: rgba(15, 23, 42, 0.06) !important; box-shadow: 0 1px 3px rgba(15,23,42,0.03);">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px; background: #ecfdf5; color: #059669;">
+                    <i class="bi bi-shield-check fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.92rem;">100% Chính hãng</h6>
+                    <small class="text-muted" style="font-size: 0.78rem;">Bảo hành toàn quốc 12T</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="p-3 p-md-4 rounded-4 bg-white d-flex align-items-center gap-3 border" style="border-color: rgba(15, 23, 42, 0.06) !important; box-shadow: 0 1px 3px rgba(15,23,42,0.03);">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px; background: #fef3c7; color: #d97706;">
+                    <i class="bi bi-arrow-repeat fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.92rem;">1 Đổi 1 trong 30 ngày</h6>
+                    <small class="text-muted" style="font-size: 0.78rem;">Nếu phát sinh lỗi NSX</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="p-3 p-md-4 rounded-4 bg-white d-flex align-items-center gap-3 border" style="border-color: rgba(15, 23, 42, 0.06) !important; box-shadow: 0 1px 3px rgba(15,23,42,0.03);">
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px; background: #f3e8ff; color: #9333ea;">
+                    <i class="bi bi-credit-card-2-front fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.92rem;">Trả góp 0%</h6>
+                    <small class="text-muted" style="font-size: 0.78rem;">Thủ tục nhanh qua thẻ</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <div class="dropdown">
-            <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
-                Sắp xếp
+<div class="container my-5" id="products">
+    <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 pb-2 border-bottom">
+        <div>
+            <span class="text-uppercase fw-bold text-primary small" style="letter-spacing: 0.08em; font-size: 0.75rem;">Sản phẩm nổi bật</span>
+            <h2 class="fw-bold text-dark m-0" style="letter-spacing: -0.02em;">Danh mục thiết bị</h2>
+        </div>
+
+        <div class="dropdown mt-2 mt-sm-0">
+            <button class="btn btn-sleek-outline btn-sm py-2 px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-filter me-1"></i> Sắp xếp theo
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="#">Giá tăng dần</a></li>
@@ -312,48 +397,63 @@
             @foreach (var product in Model)
             {
                 <div class="col">
-                    <div class="card h-100 product-card-hover shadow-sm">
+                    <div class="card h-100 product-card-hover">
                         <div class="badge-overlay">
                             @if (product.SoLuong < 1)
                             {
-                                <span class="badge bg-danger shadow-sm">Hết hàng</span>
+                                <span class="badge-sleek-stock out-of-stock">Hết hàng</span>
                             }
                             else
                             {
-                                <span class="badge bg-primary shadow-sm">Mới</span>
+                                <span class="badge-sleek-stock"><i class="bi bi-check-circle-fill"></i> Còn hàng</span>
                             }
                         </div>
 
-                        <div class="product-img-container bg-light">
+                        <div class="product-img-container">
                             <img src="@(product.ImageUrl ?? "/images/default-product.png")"
                                  alt="@product.Name"
                                  onerror="this.src='/image/logo.png'">
                         </div>
 
-                        <div class="card-body d-flex flex-column">
-                            <div class="mb-2"><span class="badge bg-light text-secondary border">@product.Category</span></div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="mb-2">
+                                <span class="badge-sleek-category">@product.Category</span>
+                            </div>
 
-                            <h5 class="card-title text-truncate" title="@product.Name" style="position: relative; z-index: 5;">
+                            <h5 class="card-title text-truncate mb-3" title="@product.Name" style="position: relative; z-index: 5; font-size: 1rem; font-weight: 700;">
                                 <a href="@Url.Action("ChiTietSanPham", "Home", new { id = product.Id })" class="text-decoration-none text-dark">@product.Name</a>
                             </h5>
 
                             <div class="mt-auto">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="fs-5 fw-bold text-primary">@product.Price.ToString("N0", cultureInfo) ₫</span>
+                                <div class="mb-3">
+                                    <span class="fs-5 fw-bold" style="color: #0f172a; letter-spacing: -0.01em;">@product.Price.ToString("N0", cultureInfo) ₫</span>
                                 </div>
 
-                                <div class="d-grid gap-2 card-actions" style="position: relative; z-index: 20;">
+                                <div class="card-actions" style="position: relative; z-index: 20;">
                                     @if (product.SoLuong > 0)
                                     {
-                                        <button type="button" class="btn btn-primary w-100 rounded-pill fw-bold position-relative"
-                                                style="z-index: 100;"
-                                                onclick="event.stopPropagation(); openOptionModal(@product.Id, '@product.Name', @product.Price, '@(product.ImageUrl ?? "/images/default.jpg")', '@product.Category')">
-                                            <i class="bi bi-cart-plus me-1"></i> Thêm vào giỏ
-                                        </button>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <button type="button" class="btn btn-sleek-soft w-100 py-2 position-relative"
+                                                        style="z-index: 100; font-size: 0.82rem;"
+                                                        title="Chọn tùy chọn và thêm vào giỏ"
+                                                        onclick="event.stopPropagation(); openOptionModal(@product.Id, '@product.Name', @product.Price, '@(product.ImageUrl ?? "/images/default.jpg")', '@product.Category')">
+                                                    <i class="bi bi-cart-plus"></i> Thêm giỏ
+                                                </button>
+                                            </div>
+                                            <div class="col-6">
+                                                <a href="@Url.Action("MuaNgay", "GioHang", new { id = product.Id })"
+                                                   class="btn btn-sleek-primary w-100 py-2 position-relative text-decoration-none d-flex align-items-center justify-content-center"
+                                                   style="z-index: 100; font-size: 0.82rem;"
+                                                   title="Mua ngay và thanh toán">
+                                                    <i class="bi bi-lightning-fill text-warning"></i> Mua ngay
+                                                </a>
+                                            </div>
+                                        </div>
                                     }
                                     else
                                     {
-                                        <button class="btn btn-secondary w-100 rounded-pill" disabled>Hết hàng</button>
+                                        <button class="btn btn-secondary w-100 rounded-pill py-2 text-muted" style="font-size: 0.85rem;" disabled>Tạm hết hàng</button>
                                     }
                                 </div>
                             </div>
@@ -364,30 +464,6 @@
         }
     </div>
 </div>
-
-<div class="container my-5">
-    <div class="row g-3">
-        <div class="col-md-4">
-            <div class="p-4 rounded-4 bg-light d-flex align-items-center gap-3 border border-light shadow-sm">
-                <i class="bi bi-truck fs-1 text-primary"></i>
-                <div>
-                    <h6 class="fw-bold mb-1">Miễn phí vận chuyển</h6>
-                    <small class="text-muted">Cho đơn hàng từ 5 triệu</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="p-4 rounded-4 bg-light d-flex align-items-center gap-3 border border-light shadow-sm">
-                <i class="bi bi-shield-check fs-1 text-success"></i>
-                <div>
-                    <h6 class="fw-bold mb-1">Bảo hành chính hãng</h6>
-                    <small class="text-muted">1 đổi 1 trong 30 ngày</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="p-4 rounded-4 bg-light d-flex align-items-center gap-3 border border-light shadow-sm">
-                <i class="bi bi-headset fs-1 text-warning"></i>
                 <div>
                     <h6 class="fw-bold mb-1">Hỗ trợ 24/7</h6>
                     <small class="text-muted">Hotline: 0965.629.698</small>
@@ -438,8 +514,20 @@
                     <input type="hidden" name="capacity" id="inputCapacity" />
                     <input type="hidden" name="color" id="inputColor" />
                     <input type="hidden" name="quantity" id="inputQuantity" value="1" />
+                    <input type="hidden" name="buyNow" id="inputBuyNow" value="false" />
 
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm">XÁC NHẬN THÊM VÀO GIỎ</button>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button type="submit" onclick="document.getElementById('inputBuyNow').value='false';" class="btn btn-outline-primary w-100 py-2 fw-bold rounded-pill shadow-sm">
+                                <i class="bi bi-cart-plus me-1"></i> THÊM VÀO GIỎ
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" onclick="document.getElementById('inputBuyNow').value='true';" class="btn btn-danger w-100 py-2 fw-bold rounded-pill shadow-sm">
+                                <i class="bi bi-lightning-fill me-1"></i> MUA NGAY
+                            </button>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>

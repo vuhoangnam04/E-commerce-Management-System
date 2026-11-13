@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
@@ -27,14 +27,22 @@ namespace banthietbidientu.Controllers
         }
 
         [HttpGet]
-        public IActionResult DangNhap()
+        public IActionResult DangNhap(string returnUrl = null)
         {
-            if (User.Identity.IsAuthenticated) return RedirectToAction("Index", "Home");
+            if (User.Identity.IsAuthenticated)
+            {
+                if (User.IsInRole("Boss") || User.IsInRole("Admin"))
+                {
+                    return RedirectToAction("Index", "Admin");
+                }
+                return RedirectToAction("Index", "Home");
+            }
+            ViewBag.ReturnUrl = returnUrl;
             return View();
         }
 
         [HttpPost]
-        public async Task<IActionResult> DangNhap(TaiKhoan model, bool RememberMe)
+        public async Task<IActionResult> DangNhap(TaiKhoan model, bool RememberMe, string returnUrl = null)
         {
             var user = _context.TaiKhoans.FirstOrDefault(u => u.Username == model.Username && u.Password == model.Password);
 
@@ -49,40 +57,32 @@ namespace banthietbidientu.Controllers
                     new Claim("Email", user.Email ?? "")
                 };
 
-                var claimsIdentity = new ClaimsIdentity(claims, "Cookies");
-                var authProperties = new AuthenticationProperties
-                {
-                    IsPersistent = RememberMe, // Nếu true => Lưu cookie lâu dài (Ghi nhớ)
-                    ExpiresUtc = DateTime.UtcNow.AddDays(30) // Thời hạn ghi nhớ (ví dụ 30 ngày)
-                };
-
-                await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(claimsIdentity), authProperties);
-
-                return RedirectToAction("Index", "Home");
-
-
-
                 if (user.StoreId.HasValue)
                 {
                     claims.Add(new Claim("StoreId", user.StoreId.Value.ToString()));
                 }
 
-                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var principal = new ClaimsPrincipal(identity);
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = RememberMe, // Lưu cookie lâu dài nếu RememberMe = true
+                    ExpiresUtc = DateTime.UtcNow.AddDays(30)
+                };
 
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
 
-                if (user.Role == "Admin" || user.Role == "Boss")
+                // Chuyển hướng theo vai trò (Role)
+                if (user.Role == "Boss" || user.Role == "Admin")
                 {
                     return RedirectToAction("Index", "Admin");
                 }
-                else
+
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 {
-                    return RedirectToAction("Index", "Home");
+                    return Redirect(returnUrl);
                 }
 
-
-
+                return RedirectToAction("Index", "Home");
             }
 
             ViewBag.Error = "Tên đăng nhập hoặc mật khẩu không đúng.";
@@ -157,7 +157,8 @@ namespace banthietbidientu.Controllers
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("", "Lỗi gửi email: " + ex.Message);
+                    string errorDetail = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                    ModelState.AddModelError("", "Lỗi gửi email: " + errorDetail);
                     return View(model);
                 }
             }
@@ -566,7 +567,18 @@ namespace banthietbidientu.Controllers
                     if (sanPham != null)
                     {
                         sanPham.SoLuong += item.SoLuong;
+                        if (order.StoreId.HasValue)
+                        {
+                            var kho = await _context.KhoHangs.FirstOrDefaultAsync(k => k.SanPhamId == sanPham.Id && k.StoreId == order.StoreId);
+                            if (kho != null) kho.SoLuong += item.SoLuong;
+                        }
                     }
+                }
+
+                if (!string.IsNullOrEmpty(order.MaVoucher))
+                {
+                    var v = await _context.Vouchers.FirstOrDefaultAsync(x => x.MaVoucher == order.MaVoucher);
+                    if (v != null && v.DaDung > 0) v.DaDung--;
                 }
 
                 var thongBao = new ThongBao

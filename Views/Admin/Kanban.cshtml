@@ -1,0 +1,624 @@
+@model IEnumerable<banthietbidientu.Models.CongViecKanban>
+
+@{
+    ViewData["Title"] = "Điều phối công việc";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var allTasks = Model?.ToList() ?? new List<banthietbidientu.Models.CongViecKanban>();
+    var nhanViens = ViewBag.NhanViens as List<banthietbidientu.Models.TaiKhoan> ?? new List<banthietbidientu.Models.TaiKhoan>();
+
+    var todoTasks = allTasks.Where(t => t.TrangThai == 0).ToList();
+    var inProgressTasks = allTasks.Where(t => t.TrangThai == 1).ToList();
+    var reviewTasks = allTasks.Where(t => t.TrangThai == 2).ToList();
+    var doneTasks = allTasks.Where(t => t.TrangThai == 3).ToList();
+}
+
+<style>
+    /* Modern Dark Kanban Layout */
+    .kanban-board-container {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        padding-bottom: 24px;
+        min-height: calc(100vh - 340px);
+    }
+
+    .kanban-board-container::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .kanban-board-container::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-radius: 999px;
+    }
+
+    .kanban-column {
+        flex: 1;
+        min-width: 310px;
+        max-width: 360px;
+        background: #131d33;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 280px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .kanban-column-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #0f172a;
+        border-radius: 18px 18px 0 0;
+    }
+
+    .kanban-column-body {
+        padding: 16px;
+        overflow-y: auto;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 200px;
+    }
+
+    .kanban-column-body::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .kanban-column-body::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+    }
+
+    /* Task Card */
+    .kanban-card {
+        background: #1e293b;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 16px;
+        cursor: grab;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        position: relative;
+    }
+
+    .kanban-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(59, 130, 246, 0.4);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .kanban-card:active {
+        cursor: grabbing;
+    }
+
+    .kanban-card.dragging {
+        opacity: 0.4;
+        border: 2px dashed #3b82f6;
+    }
+
+    .kanban-column-body.drag-over {
+        background-color: rgba(59, 130, 246, 0.08);
+        border: 2px dashed rgba(59, 130, 246, 0.5);
+        border-radius: 14px;
+    }
+
+    /* Priority Badges */
+    .badge-prio-urgent {
+        background: rgba(239, 68, 68, 0.18);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+
+    .badge-prio-high {
+        background: rgba(245, 158, 11, 0.18);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+
+    .badge-prio-normal {
+        background: rgba(59, 130, 246, 0.18);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+    }
+
+    .badge-prio-low {
+        background: rgba(148, 163, 184, 0.15);
+        color: #cbd5e1;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    /* Department Tag */
+    .badge-dept {
+        background: rgba(255, 255, 255, 0.06);
+        color: #94a3b8;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 0.72rem;
+        padding: 3px 8px;
+        border-radius: 6px;
+    }
+
+    /* Quick Action Dropdown on Card */
+    .card-quick-actions {
+        opacity: 0.7;
+        transition: opacity 0.15s ease;
+    }
+
+    .kanban-card:hover .card-quick-actions {
+        opacity: 1;
+    }
+</style>
+
+<div class="container-fluid px-0">
+
+    <!-- PAGE HEADER: KANBAN WORKFLOW DISPATCH -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary text-white rounded-pill px-3 py-1 fw-bold" style="font-size: 0.72rem; letter-spacing: 0.05em;">
+                    <i class="bi bi-diagram-3 me-1"></i> WORKFLOW DISPATCH CONSOLE
+                </span>
+                <span class="text-muted small">&bull; Trạm phân phối và điều phối công việc nhân sự</span>
+            </div>
+            <h3 class="fw-bold text-white mb-1" style="letter-spacing: -0.02em;">Bảng Điều Phối Công Việc</h3>
+            <p class="text-muted small mb-0">Phân việc theo các phòng ban, theo dõi tiến độ nhân sự và điều hành quy trình làm việc theo thời gian thực</p>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+            @if (allTasks.Any())
+            {
+                <form asp-action="XoaTatCaCongViecKanban" method="post" class="d-inline m-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa toàn bộ công việc trên bảng điều phối?');">
+                    <button type="submit" class="btn btn-outline-danger rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                        <i class="bi bi-trash3 fs-6"></i>
+                        <span>Xóa tất cả</span>
+                    </button>
+                </form>
+            }
+            <button type="button" class="btn btn-outline-light rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2" onclick="location.reload()" style="font-size: 0.85rem; border-color: rgba(255,255,255,0.18);">
+                <i class="bi bi-arrow-clockwise fs-6"></i>
+                <span>Làm mới</span>
+            </button>
+            <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 shadow" data-bs-toggle="modal" data-bs-target="#createTaskModal" style="font-size: 0.88rem; background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);">
+                <i class="bi bi-plus-circle-fill fs-6"></i>
+                <span>Giao Việc Mới</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- FEEDBACK TOASTS/ALERTS -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-4 border-0 shadow-sm d-flex align-items-center mb-4 text-white" role="alert" style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4) !important;">
+            <i class="bi bi-check-circle-fill fs-5 text-success me-3"></i>
+            <div><strong>Thành công:</strong> @TempData["Success"]</div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0 shadow-sm d-flex align-items-center mb-4 text-white" role="alert" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4) !important;">
+            <i class="bi bi-exclamation-triangle-fill fs-5 text-danger me-3"></i>
+            <div><strong>Thông báo:</strong> @TempData["Error"]</div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- CONTROL DECK: BỘ ĐIỀU KHIỂN & LỌC KANBAN TẬP TRUNG -->
+    <div class="card mb-4" style="background: #131d33; border: 1px solid rgba(255,255,255,0.09);">
+        <div class="card-body p-3">
+            <form method="get" asp-action="Kanban" id="kanbanFilterForm" class="row g-3 align-items-center">
+                <!-- Search -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="input-group border rounded-pill overflow-hidden shadow-sm p-1" style="background: #1e293b; border-color: rgba(255,255,255,0.12) !important;">
+                        <span class="input-group-text bg-transparent border-0 ps-3 text-secondary">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" name="search" value="@ViewBag.SearchHienTai" class="form-control border-0 bg-transparent ps-2 text-white fw-medium" placeholder="Tìm theo tiêu đề, nhân sự phụ trách...">
+                    </div>
+                </div>
+
+                <!-- Department Filter -->
+                <div class="col-lg-3 col-md-3 col-sm-6">
+                    <select name="phongBan" class="form-select border rounded-pill shadow-sm text-white fw-medium py-2" onchange="this.form.submit()">
+                        <option value="all" selected="@(ViewBag.PhongBanHienTai == "all")">Tất cả phòng ban</option>
+                        <option value="Kho & Cung ứng" selected="@(ViewBag.PhongBanHienTai == "Kho & Cung ứng")">📦 Kho & Cung ứng</option>
+                        <option value="Giao vận & Điều phối" selected="@(ViewBag.PhongBanHienTai == "Giao vận & Điều phối")">🚚 Giao vận & Điều phối</option>
+                        <option value="Bán hàng & Thu ngân" selected="@(ViewBag.PhongBanHienTai == "Bán hàng & Thu ngân")">🛍️ Bán hàng & Thu ngân</option>
+                        <option value="CSKH & Kỹ thuật" selected="@(ViewBag.PhongBanHienTai == "CSKH & Kỹ thuật")">🎧 CSKH & Kỹ thuật</option>
+                        <option value="Kế toán & Tài chính" selected="@(ViewBag.PhongBanHienTai == "Kế toán & Tài chính")">💼 Kế toán & Tài chính</option>
+                        <option value="Ban Giám Đốc" selected="@(ViewBag.PhongBanHienTai == "Ban Giám Đốc")">👑 Ban Giám Đốc</option>
+                    </select>
+                </div>
+
+                <!-- Priority Filter -->
+                <div class="col-lg-3 col-md-3 col-sm-6">
+                    <select name="doUuTien" class="form-select border rounded-pill shadow-sm text-white fw-medium py-2" onchange="this.form.submit()">
+                        <option value="-1" selected="@(ViewBag.DoUuTienHienTai == -1)">Tất cả mức độ ưu tiên</option>
+                        <option value="3" selected="@(ViewBag.DoUuTienHienTai == 3)">🔥 Khẩn cấp (Urgent)</option>
+                        <option value="2" selected="@(ViewBag.DoUuTienHienTai == 2)">⚡ Ưu tiên cao (High)</option>
+                        <option value="1" selected="@(ViewBag.DoUuTienHienTai == 1)">🔹 Bình thường (Normal)</option>
+                        <option value="0" selected="@(ViewBag.DoUuTienHienTai == 0)">⚪ Thấp (Low)</option>
+                    </select>
+                </div>
+
+                <!-- Reset Button -->
+                <div class="col-lg-2 col-md-12 d-flex justify-content-end">
+                    <a href="@Url.Action("Kanban", "Admin")" class="btn btn-dark border rounded-pill px-3 py-2 w-100 fw-semibold text-white text-center shadow-sm" style="border-color: rgba(255,255,255,0.15) !important;">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Đặt lại
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- KANBAN BOARD: 4 CỘT TIẾN ĐỘ QUY TRÌNH -->
+    <div class="kanban-board-container">
+
+        <!-- CỘT 1: CẦN LÀM (TO DO) -->
+        <div class="kanban-column" data-status="0">
+            <div class="kanban-column-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: #60a5fa;"></span>
+                    <span class="fw-bold text-white small text-uppercase" style="letter-spacing: 0.05em;">Cần làm</span>
+                </div>
+                <span class="badge rounded-pill px-2 py-1 text-white" id="count-col-0" style="background: rgba(255,255,255,0.1); font-size: 0.72rem;">@todoTasks.Count</span>
+            </div>
+            <div class="kanban-column-body" id="col-0" ondragover="allowDrop(event)" ondrop="handleDrop(event, 0)" ondragleave="handleDragLeave(event)">
+                @foreach (var task in todoTasks)
+                {
+                    @await Html.PartialAsync("_KanbanTaskCard", task)
+                }
+                @if (!todoTasks.Any())
+                {
+                    <div class="text-center text-muted small py-4 opacity-50 empty-indicator">
+                        <i class="bi bi-inbox fs-4 d-block mb-1"></i> Chưa có công việc
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- CỘT 2: ĐANG THỰC HIỆN (IN PROGRESS) -->
+        <div class="kanban-column" data-status="1">
+            <div class="kanban-column-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: #fbbf24; box-shadow: 0 0 8px #f59e0b;"></span>
+                    <span class="fw-bold text-white small text-uppercase" style="letter-spacing: 0.05em;">Đang thực hiện</span>
+                </div>
+                <span class="badge rounded-pill px-2 py-1 text-white" id="count-col-1" style="background: rgba(245,158,11,0.25); font-size: 0.72rem;">@inProgressTasks.Count</span>
+            </div>
+            <div class="kanban-column-body" id="col-1" ondragover="allowDrop(event)" ondrop="handleDrop(event, 1)" ondragleave="handleDragLeave(event)">
+                @foreach (var task in inProgressTasks)
+                {
+                    @await Html.PartialAsync("_KanbanTaskCard", task)
+                }
+                @if (!inProgressTasks.Any())
+                {
+                    <div class="text-center text-muted small py-4 opacity-50 empty-indicator">
+                        <i class="bi bi-inbox fs-4 d-block mb-1"></i> Chưa có công việc
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- CỘT 3: CHỜ KIỂM TRA (REVIEW) -->
+        <div class="kanban-column" data-status="2">
+            <div class="kanban-column-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: #a78bfa;"></span>
+                    <span class="fw-bold text-white small text-uppercase" style="letter-spacing: 0.05em;">Chờ kiểm tra</span>
+                </div>
+                <span class="badge rounded-pill px-2 py-1 text-white" id="count-col-2" style="background: rgba(139,92,246,0.25); font-size: 0.72rem;">@reviewTasks.Count</span>
+            </div>
+            <div class="kanban-column-body" id="col-2" ondragover="allowDrop(event)" ondrop="handleDrop(event, 2)" ondragleave="handleDragLeave(event)">
+                @foreach (var task in reviewTasks)
+                {
+                    @await Html.PartialAsync("_KanbanTaskCard", task)
+                }
+                @if (!reviewTasks.Any())
+                {
+                    <div class="text-center text-muted small py-4 opacity-50 empty-indicator">
+                        <i class="bi bi-inbox fs-4 d-block mb-1"></i> Chưa có công việc
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- CỘT 4: HOÀN THÀNH (DONE) -->
+        <div class="kanban-column" data-status="3">
+            <div class="kanban-column-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: #34d399; box-shadow: 0 0 8px #10b981;"></span>
+                    <span class="fw-bold text-white small text-uppercase" style="letter-spacing: 0.05em;">Hoàn thành</span>
+                </div>
+                <span class="badge rounded-pill px-2 py-1 text-white" id="count-col-3" style="background: rgba(16,185,129,0.25); font-size: 0.72rem;">@doneTasks.Count</span>
+            </div>
+            <div class="kanban-column-body" id="col-3" ondragover="allowDrop(event)" ondrop="handleDrop(event, 3)" ondragleave="handleDragLeave(event)">
+                @foreach (var task in doneTasks)
+                {
+                    @await Html.PartialAsync("_KanbanTaskCard", task)
+                }
+                @if (!doneTasks.Any())
+                {
+                    <div class="text-center text-muted small py-4 opacity-50 empty-indicator">
+                        <i class="bi bi-inbox fs-4 d-block mb-1"></i> Chưa có công việc
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: GIAO VIỆC MỚI (CREATE TASK) -->
+<div class="modal fade" id="createTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: #131d33; border: 1px solid rgba(255,255,255,0.15); color: #fff;">
+            <div class="modal-header border-bottom" style="border-color: rgba(255,255,255,0.08) !important;">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-clipboard-plus text-primary"></i>
+                    <span>Giao Việc Cho Phòng Ban & Nhân Sự</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="ThemCongViec" method="post">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Tiêu đề công việc <span class="text-danger">*</span></label>
+                        <input type="text" name="TieuDe" class="form-control" placeholder="Ví dụ: Kiểm kê lô điện thoại iPhone 15 mới nhập kho..." required />
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Phòng ban phụ trách</label>
+                            <select name="PhongBan" class="form-select">
+                                <option value="Kho & Cung ứng">📦 Kho & Cung ứng</option>
+                                <option value="Giao vận & Điều phối">🚚 Giao vận & Điều phối</option>
+                                <option value="Bán hàng & Thu ngân">🛍️ Bán hàng & Thu ngân</option>
+                                <option value="CSKH & Kỹ thuật">🎧 CSKH & Kỹ thuật</option>
+                                <option value="Kế toán & Tài chính">💼 Kế toán & Tài chính</option>
+                                <option value="Ban Giám Đốc">👑 Ban Giám Đốc</option>
+                            </select>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Nhân sự được giao</label>
+                            <select name="NguoiThucHienId" class="form-select">
+                                <option value="">-- Chọn nhân viên --</option>
+                                @foreach (var nv in nhanViens)
+                                {
+                                    <option value="@nv.Id">@nv.FullName (@nv.Role)</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Mức độ ưu tiên</label>
+                            <select name="DoUuTien" class="form-select">
+                                <option value="1">🔹 Bình thường (Normal)</option>
+                                <option value="2">⚡ Ưu tiên cao (High)</option>
+                                <option value="3">🔥 Khẩn cấp (Urgent)</option>
+                                <option value="0">⚪ Thấp (Low)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Chi nhánh kho</label>
+                            <select name="StoreId" class="form-select">
+                                <option value="">Toàn hệ thống (Chung)</option>
+                                <option value="1">Kho 1: Hà Nội</option>
+                                <option value="2">Kho 2: Đà Nẵng</option>
+                                <option value="3">Kho 3: TP.HCM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Hạn chót hoàn thành (Deadline)</label>
+                        <input type="datetime-local" name="HanChot" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Mô tả công việc chi tiết</label>
+                        <textarea name="MoTa" rows="3" class="form-control" placeholder="Ghi chú chi tiết yêu cầu, lưu ý giao vận hoặc chỉ dẫn nghiệp vụ..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top" style="border-color: rgba(255,255,255,0.08) !important;">
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">Phân công việc</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: SỬA CÔNG VIỆC (EDIT TASK) -->
+<div class="modal fade" id="editTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: #131d33; border: 1px solid rgba(255,255,255,0.15); color: #fff;">
+            <div class="modal-header border-bottom" style="border-color: rgba(255,255,255,0.08) !important;">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-pencil-square text-primary"></i>
+                    <span>Cập Nhật Tiến Độ & Điều Phối</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="SuaCongViecKanban" method="post">
+                <input type="hidden" name="Id" id="editTaskId" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Tiêu đề công việc <span class="text-danger">*</span></label>
+                        <input type="text" name="TieuDe" id="editTaskTieuDe" class="form-control" required />
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Trạng thái tiến độ</label>
+                            <select name="TrangThai" id="editTaskTrangThai" class="form-select">
+                                <option value="0">📋 Cần làm (To Do)</option>
+                                <option value="1">⚡ Đang thực hiện (In Progress)</option>
+                                <option value="2">🔍 Chờ kiểm tra (Review)</option>
+                                <option value="3">✅ Hoàn thành (Done)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Nhân sự thực hiện</label>
+                            <select name="NguoiThucHienId" id="editTaskNguoiThucHienId" class="form-select">
+                                <option value="">-- Chưa chỉ định --</option>
+                                @foreach (var nv in nhanViens)
+                                {
+                                    <option value="@nv.Id">@nv.FullName (@nv.Role)</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Phòng ban</label>
+                            <select name="PhongBan" id="editTaskPhongBan" class="form-select">
+                                <option value="Kho & Cung ứng">📦 Kho & Cung ứng</option>
+                                <option value="Giao vận & Điều phối">🚚 Giao vận & Điều phối</option>
+                                <option value="Bán hàng & Thu ngân">🛍️ Bán hàng & Thu ngân</option>
+                                <option value="CSKH & Kỹ thuật">🎧 CSKH & Kỹ thuật</option>
+                                <option value="Kế toán & Tài chính">💼 Kế toán & Tài chính</option>
+                                <option value="Ban Giám Đốc">👑 Ban Giám Đốc</option>
+                            </select>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Mức độ ưu tiên</label>
+                            <select name="DoUuTien" id="editTaskDoUuTien" class="form-select">
+                                <option value="3">🔥 Khẩn cấp</option>
+                                <option value="2">⚡ Cao</option>
+                                <option value="1">🔹 Bình thường</option>
+                                <option value="0">⚪ Thấp</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Mô tả chi tiết</label>
+                        <textarea name="MoTa" id="editTaskMoTa" rows="3" class="form-control"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top" style="border-color: rgba(255,255,255,0.08) !important;">
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let draggedTaskId = null;
+
+        function handleDragStart(e, id) {
+            draggedTaskId = id;
+            e.target.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', id);
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.kanban-column-body').forEach(col => {
+                col.classList.remove('drag-over');
+            });
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+            const colBody = e.currentTarget;
+            colBody.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e, targetStatus) {
+            e.preventDefault();
+            const colBody = e.currentTarget;
+            colBody.classList.remove('drag-over');
+
+            const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId;
+            if (!taskId) return;
+
+            const card = document.getElementById(`kanban-task-${taskId}`);
+            if (card) {
+                // Move card in DOM
+                colBody.appendChild(card);
+                updateColumnCounters();
+
+                // Call server API
+                fetch(`/Admin/CapNhatTrangThaiKanban?id=${taskId}&trangThai=${targetStatus}`, {
+                    method: 'POST'
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        alert("Không thể cập nhật trạng thái công việc!");
+                        location.reload();
+                    }
+                })
+                .catch(() => {
+                    alert("Lỗi kết nối khi cập nhật trạng thái!");
+                });
+            }
+        }
+
+        // Quick Move Function
+        function quickMoveTask(id, targetStatus) {
+            const card = document.getElementById(`kanban-task-${id}`);
+            const targetCol = document.getElementById(`col-${targetStatus}`);
+            if (card && targetCol) {
+                targetCol.appendChild(card);
+                updateColumnCounters();
+
+                fetch(`/Admin/CapNhatTrangThaiKanban?id=${id}&trangThai=${targetStatus}`, {
+                    method: 'POST'
+                });
+            }
+        }
+
+        function updateColumnCounters() {
+            for (let i = 0; i <= 3; i++) {
+                const col = document.getElementById(`col-${i}`);
+                const countBadge = document.getElementById(`count-col-${i}`);
+                if (col && countBadge) {
+                    const cards = col.querySelectorAll('.kanban-card');
+                    countBadge.innerText = cards.length;
+
+                    const emptyMsg = col.querySelector('.empty-indicator');
+                    if (cards.length === 0) {
+                        if (!emptyMsg) {
+                            col.insertAdjacentHTML('beforeend', '<div class="text-center text-muted small py-4 opacity-50 empty-indicator"><i class="bi bi-inbox fs-4 d-block mb-1"></i> Chưa có công việc</div>');
+                        }
+                    } else {
+                        if (emptyMsg) emptyMsg.remove();
+                    }
+                }
+            }
+        }
+
+        function openEditModal(id, tieuDe, moTa, phongBan, doUuTien, trangThai, nguoiThucHienId) {
+            document.getElementById('editTaskId').value = id;
+            document.getElementById('editTaskTieuDe').value = tieuDe;
+            document.getElementById('editTaskMoTa').value = moTa || '';
+            document.getElementById('editTaskPhongBan').value = phongBan;
+            document.getElementById('editTaskDoUuTien').value = doUuTien;
+            document.getElementById('editTaskTrangThai').value = trangThai;
+            document.getElementById('editTaskNguoiThucHienId').value = nguoiThucHienId || '';
+
+            const editModal = new bootstrap.Modal(document.getElementById('editTaskModal'));
+            editModal.show();
+        }
+    </script>
+}

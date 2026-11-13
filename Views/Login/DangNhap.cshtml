@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Đăng nhập";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -20,7 +20,7 @@
                         </div>
                     }
 
-                    <form asp-action="DangNhap" method="post">
+                    <form asp-action="DangNhap" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post">
                         <div class="form-floating mb-3">
                             <input type="text" class="form-control rounded-3" id="username" name="Username" placeholder="Tên đăng nhập" required>
                             <label for="username">Tên đăng nhập</label>

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<banthietbidientu.Models.ThongBao>
+@model IEnumerable<banthietbidientu.Models.ThongBao>
 
 @{
     ViewData["Title"] = "Quản lý thông báo";
@@ -8,10 +8,25 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="fw-bold text-primary"><i class="bi bi-bell-fill me-2"></i> Tất cả thông báo</h4>
-        <button onclick="danhDauTatCaDaDoc()" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-check-all me-1"></i> Đánh dấu tất cả đã đọc
-        </button>
+        <div class="d-flex gap-2">
+            <button onclick="danhDauTatCaDaDoc()" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-check-all me-1"></i> Đánh dấu tất cả đã đọc
+            </button>
+            <form asp-action="XoaTatCaThongBaoDaDoc" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa tất cả thông báo đã đọc?');">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-trash3 me-1"></i> Dọn dẹp đã đọc
+                </button>
+            </form>
+        </div>
     </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
@@ -65,9 +80,12 @@
                                         @item.NgayTao.ToString("HH:mm dd/MM/yyyy")
                                     </td>
                                     <td class="text-end pe-4">
-                                        <a href="javascript:void(0)" onclick="markAndGo(@item.Id, '@linkUrl')" class="btn btn-sm btn-primary">
-                                            Xem chi tiết <i class="bi bi-arrow-right ms-1"></i>
+                                        <a href="javascript:void(0)" onclick="markAndGo(@item.Id, '@linkUrl')" class="btn btn-sm btn-primary me-1">
+                                            Xem <i class="bi bi-arrow-right ms-1"></i>
                                         </a>
+                                        <button onclick="xoaThongBao(@item.Id)" class="btn btn-sm btn-outline-danger" title="Xóa thông báo">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             }
@@ -109,5 +127,26 @@
                 }
             });
         }
+    }
+
+    function xoaThongBao(id) {
+        if(!confirm('Xác nhận xóa thông báo này?')) return;
+        let formData = new FormData();
+        formData.append('id', id);
+        fetch('/Admin/XoaThongBao', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) location.reload();
+            else alert(data.message || 'Lỗi khi xóa thông báo');
+        });
+    }
+
+    function markAndGo(id, url) {
+        let formData = new FormData();
+        formData.append('id', id);
+        fetch('/Admin/MarkOneRead', { method: 'POST', body: formData })
+        .then(() => {
+            window.location.href = url;
+        });
     }
 </script>

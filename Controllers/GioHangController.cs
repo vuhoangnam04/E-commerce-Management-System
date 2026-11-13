@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Security.Claims;
@@ -73,10 +73,18 @@ namespace banthietbidientu.Controllers
         }
 
         [HttpPost]
-        public IActionResult Add(int id, int quantity = 1, string? capacity = null, string? color = null)
+        [HttpGet]
+        public IActionResult Add(int id, int quantity = 1, string? capacity = null, string? color = null, bool buyNow = false)
         {
             var product = _context.SanPhams.FirstOrDefault(p => p.Id == id);
             if (product == null) return NotFound();
+
+            if (product.SoLuong <= 0)
+            {
+                TempData["Error"] = "Sản phẩm hiện đã hết hàng!";
+                string refUrl = Request.Headers["Referer"].ToString();
+                return !string.IsNullOrEmpty(refUrl) ? Redirect(refUrl) : RedirectToAction("Index", "Home");
+            }
 
             decimal finalPrice = product.Price;
             string variantName = product.Name;
@@ -118,32 +126,65 @@ namespace banthietbidientu.Controllers
             }
 
             SaveCart(cart);
+
+            if (buyNow)
+            {
+                TempData["Success"] = $"Đã thêm {variantName} vào giỏ hàng.";
+                return RedirectToAction("Index");
+            }
+
             TempData["Success"] = $"Đã thêm: {variantName}";
 
             string referer = Request.Headers["Referer"].ToString();
             return !string.IsNullOrEmpty(referer) ? Redirect(referer) : RedirectToAction("Index", "Home");
         }
 
+        [HttpPost]
+        [HttpGet]
+        public IActionResult MuaNgay(int id, int quantity = 1, string? capacity = null, string? color = null)
+        {
+            return Add(id, quantity, capacity, color, buyNow: true);
+        }
+
+        [HttpPost]
+        [HttpGet]
         public IActionResult ThemVaoGio(int id, int quantity = 1) => Add(id, quantity);
 
-        public IActionResult Remove(int id)
+        public IActionResult Remove(int id, string? name = null)
         {
             var cart = GetCart();
-            var item = cart.FirstOrDefault(x => x.Id == id);
+            var item = !string.IsNullOrEmpty(name)
+                ? cart.FirstOrDefault(x => x.Id == id && x.Name == name)
+                : cart.FirstOrDefault(x => x.Id == id);
+
             if (item != null)
             {
                 cart.Remove(item);
                 SaveCart(cart);
+                TempData["Success"] = $"Đã xóa {item.Name} khỏi giỏ hàng.";
             }
             return RedirectToAction("Index");
         }
 
-        public IActionResult XoaKhoiGio(int id) => Remove(id);
+        public IActionResult XoaKhoiGio(int id, string? name = null) => Remove(id, name);
 
-        public IActionResult Update(int id, int quantity)
+        public IActionResult Clear()
+        {
+            HttpContext.Session.Remove("GioHang");
+            HttpContext.Session.Remove("VoucherCode");
+            HttpContext.Session.Remove("VoucherGiam");
+            TempData["Success"] = "Đã làm trống toàn bộ giỏ hàng!";
+            return RedirectToAction("Index");
+        }
+
+        public IActionResult XoaTatCaGioHang() => Clear();
+
+        public IActionResult Update(int id, int quantity, string? name = null)
         {
             var cart = GetCart();
-            var item = cart.FirstOrDefault(x => x.Id == id);
+            var item = !string.IsNullOrEmpty(name)
+                ? cart.FirstOrDefault(x => x.Id == id && x.Name == name)
+                : cart.FirstOrDefault(x => x.Id == id);
 
             if (item != null)
             {

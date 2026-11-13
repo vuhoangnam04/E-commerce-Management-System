@@ -1,4 +1,4 @@
-﻿@model banthietbidientu.Models.ThanhToanViewModel
+@model banthietbidientu.Models.ThanhToanViewModel
 
 @{
     ViewData["Title"] = "Thanh toán - Electronic Store";
@@ -205,10 +205,10 @@
             </div>
 
             <div class="col-lg-5">
-                <div class="card shadow-sm sticky-top" style="top: 20px;">
-                    <div class="card-header bg-success text-white"><h4 class="mb-0">Thanh toán</h4></div>
-                    <div class="card-body">
-                        <h5 class="fw-bold mb-3 border-bottom pb-2">Chi tiết thanh toán</h5>
+                <div class="card shadow-sm sticky-top border rounded-4 overflow-hidden" style="top: 100px;">
+                    <div class="card-header bg-white border-bottom p-3 text-dark"><h5 class="mb-0 fw-bold"><i class="bi bi-credit-card-2-front me-2 text-primary"></i>Thanh toán đơn hàng</h5></div>
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold mb-3 border-bottom pb-2 text-uppercase small text-muted" style="letter-spacing: 0.05em;">Chi tiết thanh toán</h6>
                         <div class="d-flex justify-content-between mb-2"><span class="text-muted">Tiền hàng:</span><span class="fw-bold">@subtotal.ToString("#,##0", cultureInfo) ₫</span></div>
 
                         @if (phanTramGiam > 0)
@@ -230,22 +230,22 @@
 
                         @* [ĐÃ SỬA] Hiển thị Tổng cộng và chú thích VAT (không hiện dòng thuế riêng) *@
                         <div class="d-flex justify-content-between border-top pt-3 mb-4">
-                            <span class="h5 fw-bold">Tổng cộng:</span>
+                            <span class="h5 fw-bold mb-0">Tổng cộng:</span>
                             <div class="text-end">
-                                <span class="h4 fw-bold text-danger" id="totalDisplay">@tongThanhToan.ToString("#,##0", cultureInfo) ₫</span>
+                                <span class="h4 fw-bold text-danger mb-0" id="totalDisplay">@tongThanhToan.ToString("#,##0", cultureInfo) ₫</span>
                                 <div class="small text-muted fst-italic">(Đã bao gồm VAT)</div>
                             </div>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-bold">Hình thức thanh toán</label>
-                            <div class="form-check mb-2 p-3 border rounded"><input class="form-check-input" type="radio" name="paymentMethod" id="cod" value="COD" checked><label class="form-check-label fw-bold" for="cod"><i class="bi bi-cash-stack me-2 text-success"></i>Thanh toán khi nhận hàng (COD)</label></div>
-                            <div class="form-check mb-2 p-3 border rounded bg-light"><input class="form-check-input" type="radio" name="paymentMethod" id="vnpay" value="VNPAY"><label class="form-check-label fw-bold text-primary" for="vnpay"><img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Icon-VNPAY-QR.png" style="height: 20px; margin-right: 5px;"> VNPAY - Quét mã QR</label></div>
+                            <label class="form-label fw-bold small text-muted text-uppercase" style="letter-spacing: 0.05em;">Phương thức thanh toán</label>
+                            <div class="form-check mb-2 p-3 border rounded-3 bg-white shadow-sm"><input class="form-check-input" type="radio" name="paymentMethod" id="cod" value="COD" checked><label class="form-check-label fw-bold" for="cod"><i class="bi bi-cash-stack me-2 text-success"></i>Thanh toán khi nhận hàng (COD)</label></div>
+                            <div class="form-check mb-2 p-3 border rounded-3 bg-white shadow-sm"><input class="form-check-input" type="radio" name="paymentMethod" id="vnpay" value="VNPAY"><label class="form-check-label fw-bold text-primary" for="vnpay"><img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Icon-VNPAY-QR.png" style="height: 20px; margin-right: 5px;"> VNPAY - Quét mã QR</label></div>
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="button" onclick="submitOrder()" class="btn btn-success btn-lg fw-bold shadow-sm"><i class="bi bi-check-circle me-2"></i> Đặt Hàng Ngay</button>
-                            <a asp-action="Index" asp-controller="GioHang" class="btn btn-outline-secondary btn-sm">Quay lại giỏ hàng</a>
+                            <button type="button" onclick="submitOrder()" class="btn btn-sleek-accent w-100 py-3 fw-bold rounded-pill text-uppercase d-flex align-items-center justify-content-center gap-2 shadow"><i class="bi bi-check-circle-fill fs-5"></i> <span>Xác nhận đặt hàng</span></button>
+                            <a asp-action="Index" asp-controller="GioHang" class="btn btn-outline-secondary btn-sm rounded-pill py-2 mt-1">Quay lại giỏ hàng</a>
                         </div>
                     </div>
                 </div>

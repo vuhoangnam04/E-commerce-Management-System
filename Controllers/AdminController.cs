@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -182,6 +182,7 @@ namespace banthietbidientu.Controllers
             {
                 var donHang = await _context.DonHangs
                                       .Include(d => d.TaiKhoan)
+                                      .Include(d => d.ChiTietDonHangs)
                                       .FirstOrDefaultAsync(x => x.MaDon == orderId);
 
                 if (donHang == null)
@@ -199,6 +200,57 @@ namespace banthietbidientu.Controllers
                 else if (status == "Đang giao") statusInt = 2;
                 else if (status == "Hoàn thành") statusInt = 3;
                 else if (status == "Đã hủy") statusInt = -1;
+
+                // LOGIC HOÀN TỒN KHO & VOUCHER KHI HỦY ĐƠN
+                if (statusInt == -1 && donHang.TrangThai != -1)
+                {
+                    foreach (var ct in donHang.ChiTietDonHangs)
+                    {
+                        var sp = await _context.SanPhams.FindAsync(ct.SanPhamId);
+                        if (sp != null)
+                        {
+                            sp.SoLuong += ct.SoLuong;
+                            if (donHang.StoreId.HasValue)
+                            {
+                                var kho = await _context.KhoHangs.FirstOrDefaultAsync(k => k.SanPhamId == sp.Id && k.StoreId == donHang.StoreId);
+                                if (kho != null) kho.SoLuong += ct.SoLuong;
+                            }
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(donHang.MaVoucher))
+                    {
+                        var v = await _context.Vouchers.FirstOrDefaultAsync(x => x.MaVoucher == donHang.MaVoucher);
+                        if (v != null && v.DaDung > 0) v.DaDung--;
+                    }
+                }
+                // LOGIC PHỤC HỒI ĐƠN ĐÃ HỦY -> TRỪ LẠI KHO
+                else if (donHang.TrangThai == -1 && statusInt != -1)
+                {
+                    foreach (var ct in donHang.ChiTietDonHangs)
+                    {
+                        var sp = await _context.SanPhams.FindAsync(ct.SanPhamId);
+                        if (sp != null)
+                        {
+                            sp.SoLuong -= ct.SoLuong;
+                            if (donHang.StoreId.HasValue)
+                            {
+                                var kho = await _context.KhoHangs.FirstOrDefaultAsync(k => k.SanPhamId == sp.Id && k.StoreId == donHang.StoreId);
+                                if (kho != null)
+                                {
+                                    kho.SoLuong -= ct.SoLuong;
+                                    if (kho.SoLuong < 0) kho.SoLuong = 0;
+                                }
+                            }
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(donHang.MaVoucher))
+                    {
+                        var v = await _context.Vouchers.FirstOrDefaultAsync(x => x.MaVoucher == donHang.MaVoucher);
+                        if (v != null) v.DaDung++;
+                    }
+                }
 
                 donHang.TrangThai = statusInt;
                 await _context.SaveChangesAsync();
@@ -229,6 +281,66 @@ namespace banthietbidientu.Controllers
             {
                 return Json(new { success = false, message = "Lỗi: " + ex.Message });
             }
+        }
+
+        [Authorize(Roles = "Boss")]
+        [HttpPost]
+        public async Task<IActionResult> XoaDonHang(string orderId)
+        {
+            try
+            {
+                var donHang = await _context.DonHangs
+                    .Include(d => d.ChiTietDonHangs)
+                    .FirstOrDefaultAsync(d => d.MaDon == orderId);
+
+                if (donHang == null)
+                {
+                    TempData["Error"] = "Không tìm thấy đơn hàng cần xóa!";
+                    return RedirectToAction("QuanLyDonHang");
+                }
+
+                if (donHang.TrangThai != -1 && donHang.TrangThai != 0)
+                {
+                    TempData["Error"] = "Chỉ có thể xóa đơn hàng ở trạng thái 'Đã hủy' hoặc 'Chờ xử lý'!";
+                    return RedirectToAction("QuanLyDonHang");
+                }
+
+                // Nếu đang chờ xử lý (chưa hủy), hoàn trả tồn kho trước khi xóa
+                if (donHang.TrangThai == 0)
+                {
+                    foreach (var ct in donHang.ChiTietDonHangs)
+                    {
+                        var sp = await _context.SanPhams.FindAsync(ct.SanPhamId);
+                        if (sp != null)
+                        {
+                            sp.SoLuong += ct.SoLuong;
+                            if (donHang.StoreId.HasValue)
+                            {
+                                var kho = await _context.KhoHangs.FirstOrDefaultAsync(k => k.SanPhamId == sp.Id && k.StoreId == donHang.StoreId);
+                                if (kho != null) kho.SoLuong += ct.SoLuong;
+                            }
+                        }
+                    }
+                    if (!string.IsNullOrEmpty(donHang.MaVoucher))
+                    {
+                        var v = await _context.Vouchers.FirstOrDefaultAsync(x => x.MaVoucher == donHang.MaVoucher);
+                        if (v != null && v.DaDung > 0) v.DaDung--;
+                    }
+                }
+
+                _context.ChiTietDonHangs.RemoveRange(donHang.ChiTietDonHangs);
+                _context.DonHangs.Remove(donHang);
+                await _context.SaveChangesAsync();
+
+                GhiNhatKy("Xóa đơn hàng", $"Đã xóa đơn hàng: {orderId}");
+                TempData["Success"] = $"Đã xóa đơn hàng #{orderId} thành công!";
+            }
+            catch (Exception ex)
+            {
+                string err = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                TempData["Error"] = $"Lỗi khi xóa đơn hàng: {err}";
+            }
+            return RedirectToAction("QuanLyDonHang");
         }
 
         // --- 4. API THÔNG BÁO ---
@@ -304,6 +416,36 @@ namespace banthietbidientu.Controllers
             return View(list);
         }
 
+        [HttpPost]
+        public IActionResult XoaThongBao(int id)
+        {
+            var tb = _context.ThongBaos.Find(id);
+            if (tb != null)
+            {
+                _context.ThongBaos.Remove(tb);
+                _context.SaveChanges();
+                return Json(new { success = true });
+            }
+            return Json(new { success = false, message = "Không tìm thấy thông báo" });
+        }
+
+        [HttpPost]
+        public IActionResult XoaTatCaThongBaoDaDoc()
+        {
+            var list = _context.ThongBaos.Where(x => x.DaDoc).ToList();
+            if (list.Any())
+            {
+                _context.ThongBaos.RemoveRange(list);
+                _context.SaveChanges();
+                TempData["Success"] = $"Đã dọn dẹp {list.Count} thông báo đã đọc!";
+            }
+            else
+            {
+                TempData["Success"] = "Không có thông báo đã đọc nào cần dọn dẹp.";
+            }
+            return RedirectToAction("QuanLyThongBao");
+        }
+
         // --- 6. QUẢN LÝ TÀI KHOẢN ---
         [Authorize(Roles = "Boss")]
         public IActionResult QuanLyTaiKhoan()
@@ -322,12 +464,43 @@ namespace banthietbidientu.Controllers
         [HttpPost]
         public IActionResult ThemTaiKhoan(TaiKhoan model)
         {
+            ModelState.Remove("DonHangs");
+            ModelState.Remove("DanhGias");
+            ModelState.Remove("YeuCauThuMuas");
+
+            if (!string.IsNullOrEmpty(model.Username) && _context.TaiKhoans.Any(u => u.Username.ToLower() == model.Username.ToLower().Trim()))
+            {
+                ModelState.AddModelError("Username", "Tên đăng nhập này đã tồn tại trong hệ thống!");
+            }
+
+            if (!string.IsNullOrEmpty(model.Email) && _context.TaiKhoans.Any(u => u.Email.ToLower() == model.Email.ToLower().Trim()))
+            {
+                ModelState.AddModelError("Email", "Địa chỉ email này đã được sử dụng!");
+            }
+
+            if (model.Role != "Admin")
+            {
+                model.StoreId = null;
+            }
+
             if (ModelState.IsValid)
             {
-                _context.TaiKhoans.Add(model);
-                _context.SaveChanges();
-                GhiNhatKy("Thêm tài khoản", $"Tạo mới tài khoản: {model.Username} ({model.Role})");
-                return RedirectToAction("QuanLyTaiKhoan");
+                try
+                {
+                    model.Username = model.Username.Trim();
+                    model.Email = model.Email.Trim();
+                    _context.TaiKhoans.Add(model);
+                    _context.SaveChanges();
+
+                    GhiNhatKy("Thêm tài khoản", $"Tạo mới tài khoản: {model.Username} ({model.Role})");
+                    TempData["Success"] = $"Tạo tài khoản '{model.Username}' thành công!";
+                    return RedirectToAction("QuanLyTaiKhoan");
+                }
+                catch (Exception ex)
+                {
+                    string err = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                    TempData["Error"] = $"Lỗi khi tạo tài khoản: {err}";
+                }
             }
             return View(model);
         }
@@ -346,20 +519,53 @@ namespace banthietbidientu.Controllers
         {
             ModelState.Remove("Password");
             ModelState.Remove("DonHangs");
+            ModelState.Remove("DanhGias");
+            ModelState.Remove("YeuCauThuMuas");
+
+            if (!string.IsNullOrEmpty(model.Email) && _context.TaiKhoans.Any(u => u.Id != model.Id && u.Email.ToLower() == model.Email.ToLower().Trim()))
+            {
+                ModelState.AddModelError("Email", "Email này đã được sử dụng bởi tài khoản khác!");
+            }
+
             if (ModelState.IsValid)
             {
-                var tk = _context.TaiKhoans.Find(model.Id);
-                if (tk != null)
+                try
                 {
-                    tk.FullName = model.FullName;
-                    tk.Email = model.Email;
-                    tk.Role = model.Role;
-                    tk.Address = model.Address;
-                    tk.PhoneNumber = model.PhoneNumber;
-                    _context.SaveChanges();
-                    GhiNhatKy("Sửa tài khoản", $"Cập nhật tài khoản: {tk.Username}");
+                    var tk = _context.TaiKhoans.Find(model.Id);
+                    if (tk != null)
+                    {
+                        tk.FullName = model.FullName;
+                        tk.Email = model.Email?.Trim();
+                        if (tk.Role != "Boss" || User.IsInRole("Boss"))
+                        {
+                            tk.Role = model.Role;
+                        }
+                        tk.Address = model.Address;
+                        tk.PhoneNumber = model.PhoneNumber;
+                        tk.Gender = model.Gender;
+                        if (model.DateOfBirth.HasValue) tk.DateOfBirth = model.DateOfBirth;
+                        tk.StoreId = model.Role == "Admin" ? model.StoreId : null;
+
+                        if (!string.IsNullOrWhiteSpace(model.Password))
+                        {
+                            tk.Password = model.Password;
+                        }
+
+                        _context.SaveChanges();
+                        GhiNhatKy("Sửa tài khoản", $"Cập nhật tài khoản: {tk.Username}");
+                        TempData["Success"] = $"Cập nhật tài khoản '{tk.Username}' thành công!";
+                        return RedirectToAction("QuanLyTaiKhoan");
+                    }
+                    else
+                    {
+                        TempData["Error"] = "Không tìm thấy tài khoản!";
+                    }
                 }
-                return RedirectToAction("QuanLyTaiKhoan");
+                catch (Exception ex)
+                {
+                    string err = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                    TempData["Error"] = $"Lỗi khi cập nhật tài khoản: {err}";
+                }
             }
             return View(model);
         }
@@ -368,13 +574,54 @@ namespace banthietbidientu.Controllers
         [HttpPost]
         public IActionResult XoaTaiKhoan(int id)
         {
-            var tk = _context.TaiKhoans.Find(id);
-            if (tk != null)
+            try
             {
-                string tenUser = tk.Username;
-                _context.TaiKhoans.Remove(tk);
-                _context.SaveChanges();
-                GhiNhatKy("Xóa tài khoản", $"Đã xóa tài khoản: {tenUser}");
+                var tk = _context.TaiKhoans.Find(id);
+                if (tk != null)
+                {
+                    if (tk.Role == "Boss")
+                    {
+                        TempData["Error"] = "Không thể xóa tài khoản Boss (Chủ tịch)!";
+                        return RedirectToAction("QuanLyTaiKhoan");
+                    }
+
+                    if (tk.Username == User.Identity.Name)
+                    {
+                        TempData["Error"] = "Bạn không thể tự xóa tài khoản đang đăng nhập!";
+                        return RedirectToAction("QuanLyTaiKhoan");
+                    }
+
+                    if (_context.DonHangs.Any(d => d.TaiKhoanId == id))
+                    {
+                        TempData["Error"] = $"Tài khoản '{tk.Username}' đã có lịch sử đơn hàng, không thể xóa để bảo toàn dữ liệu!";
+                        return RedirectToAction("QuanLyTaiKhoan");
+                    }
+
+                    var gioHangs = _context.GioHangs.Where(g => g.UserId == id);
+                    _context.GioHangs.RemoveRange(gioHangs);
+
+                    var danhGias = _context.DanhGias.Where(d => d.TaiKhoanId == id);
+                    _context.DanhGias.RemoveRange(danhGias);
+
+                    var cauHinhLuong = _context.CauHinhLuongs.Where(c => c.TaiKhoanId == id);
+                    _context.CauHinhLuongs.RemoveRange(cauHinhLuong);
+
+                    string tenUser = tk.Username;
+                    _context.TaiKhoans.Remove(tk);
+                    _context.SaveChanges();
+
+                    GhiNhatKy("Xóa tài khoản", $"Đã xóa tài khoản: {tenUser}");
+                    TempData["Success"] = $"Đã xóa tài khoản '{tenUser}' thành công!";
+                }
+                else
+                {
+                    TempData["Error"] = "Không tìm thấy tài khoản cần xóa!";
+                }
+            }
+            catch (Exception ex)
+            {
+                string err = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                TempData["Error"] = $"Lỗi khi xóa tài khoản: {err}";
             }
             return RedirectToAction("QuanLyTaiKhoan");
         }
@@ -558,6 +805,29 @@ namespace banthietbidientu.Controllers
                 y.GhiChu = ghiChuAdmin;
                 _context.SaveChanges();
                 GhiNhatKy("Cập nhật thu mua", $"Yêu cầu {y.TenMay} (ID: {id}) -> Trạng thái {trangThai}");
+                TempData["Success"] = $"Đã cập nhật trạng thái yêu cầu #{y.MaYeuCau}!";
+            }
+            return RedirectToAction("QuanLyThuMua");
+        }
+
+        [HttpPost]
+        public IActionResult XoaThuMua(int id)
+        {
+            try
+            {
+                var y = _context.YeuCauThuMuas.Find(id);
+                if (y != null)
+                {
+                    string ma = y.MaYeuCau ?? y.TenMay;
+                    _context.YeuCauThuMuas.Remove(y);
+                    _context.SaveChanges();
+                    GhiNhatKy("Xóa yêu cầu thu mua", $"Đã xóa yêu cầu: {ma}");
+                    TempData["Success"] = $"Đã xóa yêu cầu thu mua #{ma} thành công!";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lỗi khi xóa yêu cầu: " + ex.Message;
             }
             return RedirectToAction("QuanLyThuMua");
         }
@@ -671,15 +941,41 @@ namespace banthietbidientu.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult ThemVoucher(Voucher model)
         {
-            if (_context.Vouchers.Any(v => v.MaVoucher == model.MaVoucher)) ModelState.AddModelError("MaVoucher", "Mã voucher này đã tồn tại!");
-            if (ModelState.IsValid)
+            if (!string.IsNullOrEmpty(model.MaVoucher))
             {
                 model.MaVoucher = model.MaVoucher.ToUpper().Trim();
-                _context.Vouchers.Add(model);
-                _context.SaveChanges();
-                GhiNhatKy("Thêm Voucher", $"Tạo mã: {model.MaVoucher}");
-                TempData["Success"] = "Đã tạo mã giảm giá thành công!";
-                return RedirectToAction("QuanLyVoucher");
+            }
+
+            if (_context.Vouchers.Any(v => v.MaVoucher == model.MaVoucher))
+            {
+                ModelState.AddModelError("MaVoucher", "Mã voucher này đã tồn tại trong hệ thống!");
+            }
+
+            if (model.NgayKetThuc <= model.NgayBatDau)
+            {
+                ModelState.AddModelError("NgayKetThuc", "Ngày kết thúc phải lớn hơn ngày bắt đầu hiệu lực!");
+            }
+
+            if (model.LoaiGiamGia == 1 && (model.GiaTri <= 0 || model.GiaTri > 100))
+            {
+                ModelState.AddModelError("GiaTri", "Mức giảm theo % phải nằm trong khoảng từ 1% đến 100%!");
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Vouchers.Add(model);
+                    _context.SaveChanges();
+                    GhiNhatKy("Thêm Voucher", $"Tạo mã voucher mới: {model.MaVoucher}");
+                    TempData["Success"] = $"Đã tạo mã giảm giá '{model.MaVoucher}' thành công!";
+                    return RedirectToAction("QuanLyVoucher");
+                }
+                catch (Exception ex)
+                {
+                    string err = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                    TempData["Error"] = $"Lỗi khi lưu mã giảm giá: {err}";
+                }
             }
             return View(model);
         }
@@ -697,24 +993,47 @@ namespace banthietbidientu.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult SuaVoucher(Voucher model)
         {
+            if (model.NgayKetThuc <= model.NgayBatDau)
+            {
+                ModelState.AddModelError("NgayKetThuc", "Ngày kết thúc phải lớn hơn ngày bắt đầu hiệu lực!");
+            }
+
+            if (model.LoaiGiamGia == 1 && (model.GiaTri <= 0 || model.GiaTri > 100))
+            {
+                ModelState.AddModelError("GiaTri", "Mức giảm theo % phải nằm trong khoảng từ 1% đến 100%!");
+            }
+
             if (ModelState.IsValid)
             {
-                var v = _context.Vouchers.Find(model.Id);
-                if (v != null)
+                try
                 {
-                    v.TenVoucher = model.TenVoucher;
-                    v.LoaiGiamGia = model.LoaiGiamGia;
-                    v.GiaTri = model.GiaTri;
-                    v.GiamToiDa = model.GiamToiDa;
-                    v.DonToiThieu = model.DonToiThieu;
-                    v.SoLuong = model.SoLuong;
-                    v.NgayBatDau = model.NgayBatDau;
-                    v.NgayKetThuc = model.NgayKetThuc;
-                    v.IsActive = model.IsActive;
-                    _context.SaveChanges();
-                    GhiNhatKy("Sửa Voucher", $"Cập nhật mã: {v.MaVoucher}");
-                    TempData["Success"] = "Cập nhật thành công!";
-                    return RedirectToAction("QuanLyVoucher");
+                    var v = _context.Vouchers.Find(model.Id);
+                    if (v != null)
+                    {
+                        v.TenVoucher = model.TenVoucher;
+                        v.LoaiGiamGia = model.LoaiGiamGia;
+                        v.GiaTri = model.GiaTri;
+                        v.GiamToiDa = model.GiamToiDa;
+                        v.DonToiThieu = model.DonToiThieu;
+                        v.SoLuong = model.SoLuong;
+                        v.NgayBatDau = model.NgayBatDau;
+                        v.NgayKetThuc = model.NgayKetThuc;
+                        v.IsActive = model.IsActive;
+                        _context.SaveChanges();
+
+                        GhiNhatKy("Sửa Voucher", $"Cập nhật voucher: {v.MaVoucher}");
+                        TempData["Success"] = $"Cập nhật mã '{v.MaVoucher}' thành công!";
+                        return RedirectToAction("QuanLyVoucher");
+                    }
+                    else
+                    {
+                        TempData["Error"] = "Không tìm thấy mã giảm giá cần cập nhật!";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    string err = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                    TempData["Error"] = $"Lỗi khi cập nhật mã: {err}";
                 }
             }
             return View(model);
@@ -724,12 +1043,37 @@ namespace banthietbidientu.Controllers
         [HttpPost]
         public IActionResult XoaVoucher(int id)
         {
-            var v = _context.Vouchers.Find(id);
-            if (v != null)
+            try
             {
-                _context.Vouchers.Remove(v);
-                _context.SaveChanges();
-                GhiNhatKy("Xóa Voucher", $"Đã xóa mã: {v.MaVoucher}");
+                var v = _context.Vouchers.Find(id);
+                if (v != null)
+                {
+                    bool daDungChoDonHang = _context.DonHangs.Any(d => d.MaVoucher == v.MaVoucher);
+                    if (daDungChoDonHang)
+                    {
+                        // Thay vì xóa cứng làm mất dấu lịch sử đơn, chuyển trạng thái tắt kích hoạt
+                        v.IsActive = false;
+                        _context.SaveChanges();
+                        GhiNhatKy("Khóa Voucher", $"Đã vô hiệu hóa mã voucher đã có đơn hàng: {v.MaVoucher}");
+                        TempData["Success"] = $"Mã '{v.MaVoucher}' đã được áp dụng cho đơn hàng nên hệ thống chuyển sang trạng thái 'Ngừng kích hoạt'!";
+                        return RedirectToAction("QuanLyVoucher");
+                    }
+
+                    string ma = v.MaVoucher;
+                    _context.Vouchers.Remove(v);
+                    _context.SaveChanges();
+                    GhiNhatKy("Xóa Voucher", $"Đã xóa mã: {ma}");
+                    TempData["Success"] = $"Đã xóa mã voucher '{ma}' thành công!";
+                }
+                else
+                {
+                    TempData["Error"] = "Không tìm thấy mã voucher cần xóa!";
+                }
+            }
+            catch (Exception ex)
+            {
+                string err = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                TempData["Error"] = $"Lỗi khi xóa mã: {err}";
             }
             return RedirectToAction("QuanLyVoucher");
         }
@@ -955,6 +1299,123 @@ namespace banthietbidientu.Controllers
             return Json(new { success = true });
         }
 
+        [Authorize(Roles = "Boss")]
+        [HttpPost]
+        public IActionResult HuyChotLuong(int taiKhoanId, int month, int year)
+        {
+            var bangLuong = _context.BangLuongs.FirstOrDefault(b => b.TaiKhoanId == taiKhoanId && b.Thang == month && b.Nam == year);
+            if (bangLuong != null)
+            {
+                var user = _context.TaiKhoans.Find(taiKhoanId);
+                _context.BangLuongs.Remove(bangLuong);
+                _context.SaveChanges();
+                GhiNhatKy("Hủy chốt lương", $"Đã hủy chốt lương tháng {month}/{year} cho {user?.Username ?? taiKhoanId.ToString()}");
+                return Json(new { success = true });
+            }
+            return Json(new { success = false, message = "Không tìm thấy bảng lương đã chốt" });
+        }
+
+        // --- XUẤT EXCEL BẢNG LƯƠNG ---
+        [Authorize(Roles = "Boss")]
+        [HttpGet]
+        public IActionResult XuatExcelLuong(int? month, int? year)
+        {
+            var now = DateTime.Now;
+            int sMonth = month ?? now.Month;
+            int sYear = year ?? now.Year;
+
+            var admins = _context.TaiKhoans.Where(u => u.Role == "Admin").ToList();
+            var configs = _context.CauHinhLuongs.ToList();
+            var paidSalaries = _context.BangLuongs.Where(b => b.Thang == sMonth && b.Nam == sYear).ToList();
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Nhân viên,Username,Chi nhánh,Lương cứng,% Hoa hồng,Doanh số,Tiền hoa hồng,Tổng thực nhận,Trạng thái,Ngày chốt");
+
+            foreach (var ad in admins)
+            {
+                var paid = paidSalaries.FirstOrDefault(p => p.TaiKhoanId == ad.Id);
+                string storeName = ad.StoreId switch { 1 => "Hà Nội", 2 => "Đà Nẵng", 3 => "TP.HCM", _ => "---" };
+
+                if (paid != null)
+                {
+                    double phanTram = paid.DoanhSoDatDuoc > 0 ? Math.Round((double)(paid.TienHoaHong / paid.DoanhSoDatDuoc * 100), 2) : 0;
+                    string ngayChot = paid.NgayChot.ToString("dd/MM/yyyy HH:mm");
+                    sb.AppendLine($"\"{ad.FullName}\",{ad.Username},{storeName},{paid.LuongCung:N0},{phanTram}%,{paid.DoanhSoDatDuoc:N0},{paid.TienHoaHong:N0},{paid.TongThucNhan:N0},Đã chốt,{ngayChot}");
+                }
+                else
+                {
+                    var config = configs.FirstOrDefault(c => c.TaiKhoanId == ad.Id);
+                    decimal luongCung = config?.LuongCung ?? 0;
+                    double phanTram = config?.PhanTramHoaHong ?? 0;
+                    decimal doanhSo = 0;
+                    if (ad.StoreId.HasValue)
+                    {
+                        doanhSo = _context.DonHangs
+                            .Where(d => d.StoreId == ad.StoreId && d.TrangThai == 3 && d.NgayDat.Value.Month == sMonth && d.NgayDat.Value.Year == sYear)
+                            .Sum(d => d.TongTien - d.TienThue);
+                    }
+                    decimal hoaHong = doanhSo * (decimal)(phanTram / 100);
+                    decimal tongNhan = luongCung + hoaHong;
+                    sb.AppendLine($"\"{ad.FullName}\",{ad.Username},{storeName},{luongCung:N0},{phanTram}%,{doanhSo:N0},{hoaHong:N0},{tongNhan:N0},Chưa chốt,");
+                }
+            }
+
+            string fileName = $"BangLuong_T{sMonth}_{sYear}.csv";
+            var fileContent = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+            return File(fileContent, "text/csv", fileName);
+        }
+
+        // --- XÓA NHẬT KÝ HOẠT ĐỘNG ---
+        [Authorize(Roles = "Boss")]
+        [HttpPost]
+        public IActionResult XoaNhatKy(int id)
+        {
+            try
+            {
+                var log = _context.LichSuHoatDongs.Find(id);
+                if (log != null)
+                {
+                    _context.LichSuHoatDongs.Remove(log);
+                    _context.SaveChanges();
+                    TempData["Success"] = "Đã xóa bản ghi nhật ký.";
+                }
+                else
+                {
+                    TempData["Error"] = "Không tìm thấy bản ghi nhật ký!";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lỗi khi xóa: " + ex.Message;
+            }
+            return RedirectToAction("NhatKyHoatDong");
+        }
+
+        [Authorize(Roles = "Boss")]
+        [HttpPost]
+        public IActionResult XoaTatCaNhatKy()
+        {
+            try
+            {
+                var allLogs = _context.LichSuHoatDongs.ToList();
+                if (allLogs.Any())
+                {
+                    _context.LichSuHoatDongs.RemoveRange(allLogs);
+                    _context.SaveChanges();
+                    TempData["Success"] = $"Đã dọn dẹp toàn bộ {allLogs.Count} bản ghi nhật ký!";
+                }
+                else
+                {
+                    TempData["Success"] = "Nhật ký hoạt động đã trống.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lỗi khi dọn dẹp: " + ex.Message;
+            }
+            return RedirectToAction("NhatKyHoatDong");
+        }
+
         // --- 17. THU NHẬP CỦA TÔI ---
         public IActionResult LuongCuaToi()
         {
@@ -993,6 +1454,284 @@ namespace banthietbidientu.Controllers
             ViewBag.TongDuKien = luongCung + hoaHongDuKien;
 
             return View(lichSuLuong);
+        }
+
+        // --- ĐIỀU PHỐI KHO (FORWARDING ENDPOINTS) ---
+        [HttpPost]
+        public async Task<IActionResult> DuyetYeuCau(int id, int tuKhoId)
+        {
+            if (!User.IsInRole("Boss")) return Json(new { success = false, message = "Quyền hạn không đủ" });
+            var phieu = await _context.PhieuChuyenKhos.FindAsync(id);
+            if (phieu == null) return Json(new { success = false, message = "Không tìm thấy phiếu" });
+            if (tuKhoId == phieu.DenKhoId) return Json(new { success = false, message = "Kho đi/đến trùng nhau!" });
+            phieu.TuKhoId = tuKhoId;
+            await _context.SaveChangesAsync();
+            TaoThongBaoHeThong("Lệnh xuất hàng", $"Boss duyệt yêu cầu #{phieu.MaPhieu}. Xuất hàng ngay.", phieu.Id.ToString(), "QuanLyChuyenKho", tuKhoId);
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DuyetXuatKho(int id)
+        {
+            var phieu = await _context.PhieuChuyenKhos.Include(p => p.SanPham).FirstOrDefaultAsync(p => p.Id == id);
+            if (phieu == null || phieu.TrangThai != 0) return Json(new { success = false, message = "Lỗi trạng thái" });
+            var khoDi = await _context.KhoHangs.FirstOrDefaultAsync(k => k.SanPhamId == phieu.SanPhamId && k.StoreId == phieu.TuKhoId);
+            if (khoDi == null || khoDi.SoLuong < phieu.SoLuong)
+                return Json(new { success = false, message = $"Kho đi ({GetStoreName(phieu.TuKhoId)}) không đủ hàng!" });
+            khoDi.SoLuong -= phieu.SoLuong;
+            phieu.TrangThai = 1;
+            await _context.SaveChangesAsync();
+            TaoThongBaoHeThong("Hàng đang đến", $"Kho {GetStoreName(phieu.TuKhoId)} đã xuất phiếu {phieu.MaPhieu}.", phieu.Id.ToString(), "QuanLyChuyenKho", phieu.DenKhoId);
+            GhiNhatKy("Xuất kho", $"Xuất {phieu.SoLuong} {phieu.SanPham.Name} đi {GetStoreName(phieu.DenKhoId)}");
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> XacNhanNhanHang(int id)
+        {
+            var phieu = await _context.PhieuChuyenKhos.Include(p => p.SanPham).FirstOrDefaultAsync(p => p.Id == id);
+            if (phieu == null || phieu.TrangThai != 1) return Json(new { success = false });
+            var khoDen = await _context.KhoHangs.FirstOrDefaultAsync(k => k.SanPhamId == phieu.SanPhamId && k.StoreId == phieu.DenKhoId);
+            if (khoDen != null) khoDen.SoLuong += phieu.SoLuong;
+            else _context.KhoHangs.Add(new KhoHang { SanPhamId = phieu.SanPhamId, StoreId = phieu.DenKhoId, SoLuong = phieu.SoLuong });
+            phieu.TrangThai = 2;
+            phieu.NgayHoanThanh = DateTime.Now;
+            await _context.SaveChangesAsync();
+            TaoThongBaoHeThong("Hoàn tất", $"Phiếu {phieu.MaPhieu} đã hoàn thành.", phieu.Id.ToString(), "QuanLyChuyenKho", null);
+            GhiNhatKy("Nhập kho", $"Nhận {phieu.SoLuong} {phieu.SanPham.Name} từ {GetStoreName(phieu.TuKhoId)}");
+            return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> HuyChuyenKho(int id)
+        {
+            var phieu = await _context.PhieuChuyenKhos.Include(p => p.SanPham).FirstOrDefaultAsync(p => p.Id == id);
+            if (phieu == null) return Json(new { success = false, message = "Không tìm thấy phiếu" });
+            if (phieu.TrangThai == 0)
+            {
+                phieu.TrangThai = -1;
+                await _context.SaveChangesAsync();
+                GhiNhatKy("Hủy chuyển kho", $"Đã hủy phiếu chuyển kho #{phieu.MaPhieu}");
+                return Json(new { success = true });
+            }
+            else if (phieu.TrangThai == 1)
+            {
+                var khoDi = await _context.KhoHangs.FirstOrDefaultAsync(k => k.SanPhamId == phieu.SanPhamId && k.StoreId == phieu.TuKhoId);
+                if (khoDi != null) khoDi.SoLuong += phieu.SoLuong;
+                else _context.KhoHangs.Add(new KhoHang { SanPhamId = phieu.SanPhamId, StoreId = phieu.TuKhoId, SoLuong = phieu.SoLuong });
+                phieu.TrangThai = -1;
+                await _context.SaveChangesAsync();
+                GhiNhatKy("Hủy chuyển kho", $"Hủy phiếu #{phieu.MaPhieu} khi đang chuyển và đã hoàn {phieu.SoLuong} {phieu.SanPham?.Name} về {GetStoreName(phieu.TuKhoId)}");
+                return Json(new { success = true });
+            }
+            return Json(new { success = false, message = "Không thể hủy phiếu ở trạng thái này!" });
+        }
+
+        // --- 13. TÍNH NĂNG KANBAN ĐIỀU PHỐI CÔNG VIỆC & PHÂN VIỆC PHÒNG BAN ---
+        private void EnsureKanbanTableCreated()
+        {
+            try
+            {
+                string sql = @"
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='CongViecKanbans' AND xtype='U')
+BEGIN
+    CREATE TABLE [dbo].[CongViecKanbans] (
+        [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [TieuDe] NVARCHAR(250) NOT NULL,
+        [MoTa] NVARCHAR(MAX) NULL,
+        [PhongBan] NVARCHAR(100) NOT NULL DEFAULT N'Kho & Cung ứng',
+        [NguoiThucHienId] INT NULL,
+        [TenNguoiThucHien] NVARCHAR(100) NULL,
+        [NguoiGiaoViec] NVARCHAR(50) NULL,
+        [TrangThai] INT NOT NULL DEFAULT 0,
+        [DoUuTien] INT NOT NULL DEFAULT 1,
+        [StoreId] INT NULL,
+        [HanChot] DATETIME2 NULL,
+        [NgayTao] DATETIME2 NOT NULL DEFAULT GETDATE(),
+        [NgayHoanThanh] DATETIME2 NULL
+    );
+END";
+                _context.Database.ExecuteSqlRaw(sql);
+            }
+            catch { }
+        }
+
+        [Authorize(Roles = "Boss,Admin")]
+        public IActionResult Kanban(string? phongBan, int? storeId, int? doUuTien, string? search)
+        {
+            EnsureKanbanTableCreated();
+
+            var query = _context.CongViecKanbans.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrEmpty(phongBan) && phongBan != "all")
+            {
+                query = query.Where(k => k.PhongBan == phongBan);
+            }
+
+            if (storeId.HasValue && storeId.Value != 0)
+            {
+                query = query.Where(k => k.StoreId == storeId.Value);
+            }
+
+            if (doUuTien.HasValue && doUuTien.Value >= 0)
+            {
+                query = query.Where(k => k.DoUuTien == doUuTien.Value);
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                string s = search.ToLower().Trim();
+                query = query.Where(k => k.TieuDe.ToLower().Contains(s) || (k.TenNguoiThucHien != null && k.TenNguoiThucHien.ToLower().Contains(s)));
+            }
+
+            var list = query.OrderByDescending(k => k.DoUuTien).ThenByDescending(k => k.NgayTao).ToList();
+
+            ViewBag.NhanViens = _context.TaiKhoans.AsNoTracking()
+                .Where(t => t.Role == "Admin" || t.Role == "Boss")
+                .ToList();
+
+            ViewBag.PhongBanHienTai = phongBan ?? "all";
+            ViewBag.StoreIdHienTai = storeId ?? 0;
+            ViewBag.DoUuTienHienTai = doUuTien ?? -1;
+            ViewBag.SearchHienTai = search ?? "";
+
+            return View(list);
+        }
+
+        [Authorize(Roles = "Boss,Admin")]
+        [HttpPost]
+        public IActionResult ThemCongViec(CongViecKanban model)
+        {
+            EnsureKanbanTableCreated();
+
+            if (string.IsNullOrWhiteSpace(model.TieuDe))
+            {
+                TempData["Error"] = "Vui lòng nhập tiêu đề công việc!";
+                return RedirectToAction("Kanban");
+            }
+
+            if (model.NguoiThucHienId.HasValue)
+            {
+                var tk = _context.TaiKhoans.Find(model.NguoiThucHienId.Value);
+                if (tk != null)
+                {
+                    model.TenNguoiThucHien = tk.FullName;
+                    if (!model.StoreId.HasValue && tk.StoreId.HasValue)
+                    {
+                        model.StoreId = tk.StoreId;
+                    }
+                }
+            }
+
+            model.NguoiGiaoViec = User.Identity?.Name ?? "Admin";
+            model.NgayTao = DateTime.Now;
+
+            _context.CongViecKanbans.Add(model);
+            _context.SaveChanges();
+
+            GhiNhatKy("Giao việc", $"Đã giao việc: '{model.TieuDe}' cho {model.TenNguoiThucHien ?? "Phòng ban"}");
+            TempData["Success"] = "Đã tạo và phân công công việc mới thành công!";
+            return RedirectToAction("Kanban");
+        }
+
+        [Authorize(Roles = "Boss,Admin")]
+        [HttpPost]
+        public IActionResult CapNhatTrangThaiKanban(int id, int trangThai)
+        {
+            EnsureKanbanTableCreated();
+
+            var task = _context.CongViecKanbans.Find(id);
+            if (task == null) return Json(new { success = false, message = "Không tìm thấy công việc" });
+
+            task.TrangThai = trangThai;
+            if (trangThai == 3) // Hoàn thành
+            {
+                task.NgayHoanThanh = DateTime.Now;
+            }
+            else
+            {
+                task.NgayHoanThanh = null;
+            }
+
+            _context.SaveChanges();
+            GhiNhatKy("Cập nhật tiến độ", $"Chuyển trạng thái công việc #{task.Id} sang {trangThai}");
+
+            return Json(new { success = true });
+        }
+
+        [Authorize(Roles = "Boss,Admin")]
+        [HttpPost]
+        public IActionResult SuaCongViecKanban(CongViecKanban model)
+        {
+            EnsureKanbanTableCreated();
+
+            var task = _context.CongViecKanbans.Find(model.Id);
+            if (task == null)
+            {
+                TempData["Error"] = "Không tìm thấy công việc cần sửa!";
+                return RedirectToAction("Kanban");
+            }
+
+            task.TieuDe = model.TieuDe;
+            task.MoTa = model.MoTa;
+            task.PhongBan = model.PhongBan;
+            task.DoUuTien = model.DoUuTien;
+            task.TrangThai = model.TrangThai;
+            task.StoreId = model.StoreId;
+            task.HanChot = model.HanChot;
+
+            if (model.NguoiThucHienId.HasValue)
+            {
+                task.NguoiThucHienId = model.NguoiThucHienId;
+                var tk = _context.TaiKhoans.Find(model.NguoiThucHienId.Value);
+                if (tk != null)
+                {
+                    task.TenNguoiThucHien = tk.FullName;
+                }
+            }
+
+            if (task.TrangThai == 3 && task.NgayHoanThanh == null)
+            {
+                task.NgayHoanThanh = DateTime.Now;
+            }
+
+            _context.SaveChanges();
+            TempData["Success"] = $"Đã cập nhật công việc '{task.TieuDe}' thành công!";
+            return RedirectToAction("Kanban");
+        }
+
+        [Authorize(Roles = "Boss,Admin")]
+        [HttpPost]
+        public IActionResult XoaCongViecKanban(int id)
+        {
+            EnsureKanbanTableCreated();
+
+            var task = _context.CongViecKanbans.Find(id);
+            if (task != null)
+            {
+                string title = task.TieuDe;
+                _context.CongViecKanbans.Remove(task);
+                _context.SaveChanges();
+                GhiNhatKy("Xóa công việc", $"Đã xóa công việc '{title}'");
+                TempData["Success"] = "Đã xóa công việc thành công!";
+            }
+            return RedirectToAction("Kanban");
+        }
+
+        [Authorize(Roles = "Boss,Admin")]
+        [HttpPost]
+        public IActionResult XoaTatCaCongViecKanban()
+        {
+            EnsureKanbanTableCreated();
+            var all = _context.CongViecKanbans.ToList();
+            if (all.Any())
+            {
+                _context.CongViecKanbans.RemoveRange(all);
+                _context.SaveChanges();
+                GhiNhatKy("Dọn dẹp bảng điều phối", "Đã xóa toàn bộ công việc trên bảng điều phối");
+                TempData["Success"] = "Đã dọn sạch toàn bộ công việc trên bảng điều phối!";
+            }
+            return RedirectToAction("Kanban");
         }
     }
 }

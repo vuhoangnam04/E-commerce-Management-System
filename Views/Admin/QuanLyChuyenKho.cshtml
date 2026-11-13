@@ -1,4 +1,4 @@
-﻿@model IEnumerable<banthietbidientu.Models.PhieuChuyenKho>
+@model IEnumerable<banthietbidientu.Models.PhieuChuyenKho>
 @using System.Security.Claims
 @{
     ViewData["Title"] = "Quản lý Điều phối kho";
@@ -16,6 +16,21 @@
             <i class="bi bi-plus-lg me-2"></i>Tạo Lệnh Chuyển
         </a>
     </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-0">
@@ -91,16 +106,22 @@
                                     <td class="text-end pe-4">
                                         @if (item.TuKhoId == 0 && isBoss)
                                         {
-                                            <button onclick="openDuyetModal(@item.Id, '@item.MaPhieu')" class="btn btn-sm btn-success fw-bold">
+                                            <button onclick="openDuyetModal(@item.Id, '@item.MaPhieu')" class="btn btn-sm btn-success fw-bold me-1">
                                                 <i class="bi bi-check-lg"></i> Duyệt & Chọn Nguồn
+                                            </button>
+                                            <button onclick="huyPhieu(@item.Id)" class="btn btn-sm btn-outline-danger" title="Từ chối/Hủy yêu cầu">
+                                                <i class="bi bi-x-lg"></i>
                                             </button>
                                         }
                                         else if (item.TrangThai == 0 && item.TuKhoId != 0) // Chờ xuất kho
                                         {
-                                            if (currentStoreId == item.TuKhoId)
+                                            if (currentStoreId == item.TuKhoId || isBoss)
                                             {
-                                                <button onclick="duyetXuatKho(@item.Id)" class="btn btn-sm btn-outline-primary fw-bold me-1">Xuất kho</button>
-                                                <button onclick="huyPhieu(@item.Id)" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+                                                if (currentStoreId == item.TuKhoId)
+                                                {
+                                                    <button onclick="duyetXuatKho(@item.Id)" class="btn btn-sm btn-outline-primary fw-bold me-1">Xuất kho</button>
+                                                }
+                                                <button onclick="huyPhieu(@item.Id)" class="btn btn-sm btn-outline-danger" title="Hủy phiếu"><i class="bi bi-x-lg"></i></button>
                                             }
                                             else
                                             {
@@ -111,11 +132,31 @@
                                         {
                                             if (currentStoreId == item.DenKhoId)
                                             {
-                                                <button onclick="xacNhanNhan(@item.Id)" class="btn btn-sm btn-success fw-bold">Nhập kho</button>
+                                                <button onclick="xacNhanNhan(@item.Id)" class="btn btn-sm btn-success fw-bold me-1">Nhập kho</button>
                                             }
                                             else
                                             {
-                                                <small class="text-primary fst-italic"><i class="bi bi-truck"></i> Đang đi đường...</small>
+                                                <small class="text-primary fst-italic me-2"><i class="bi bi-truck"></i> Đang đi đường...</small>
+                                            }
+                                            @if (isBoss || currentStoreId == item.TuKhoId)
+                                            {
+                                                <button onclick="huyPhieu(@item.Id)" class="btn btn-sm btn-outline-danger" title="Hủy và hoàn kho"><i class="bi bi-arrow-counterclockwise"></i> Hủy</button>
+                                            }
+                                        }
+                                        else if (item.TrangThai == -1) // Đã hủy
+                                        {
+                                            @if (isBoss)
+                                            {
+                                                <form asp-action="XoaLenhChuyenKho" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi phiếu chuyển kho này?');">
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa bản ghi">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <small class="text-muted fst-italic">Đã hủy</small>
                                             }
                                         }
                                     </td>
@@ -141,7 +182,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Admin này đang xin hàng. Bạn muốn lấy hàng từ kho nào để cấp cho họ?</p>
+                <p>Admin chi nhánh đang cần hỗ trợ hàng. Bạn muốn lấy hàng từ kho nào để cấp cho họ?</p>
                 <input type="hidden" id="modalPhieuId" />
                 <label class="form-label fw-bold">Chọn Kho Nguồn Cấp Hàng:</label>
                 <select class="form-select mb-3" id="modalTuKho">
@@ -174,27 +215,27 @@
             formData.append('id', id);
             formData.append('tuKhoId', tuKho);
 
-            fetch('/Admin/DuyetYeuCau', { method: 'POST', body: formData })
+            fetch('/Warehouse/DuyetYeuCau', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
                 if(data.success) location.reload();
-                else alert(data.message);
+                else alert(data.message || 'Lỗi xử lý duyệt yêu cầu');
             });
         }
 
         function duyetXuatKho(id) {
-            if(!confirm('Xác nhận xuất kho?')) return;
-            callApi('/Admin/DuyetXuatKho', id);
+            if(!confirm('Xác nhận xuất kho? Hàng sẽ được trừ khỏi kho của bạn.')) return;
+            callApi('/Warehouse/DuyetXuatKho', id);
         }
 
         function xacNhanNhan(id) {
-            if(!confirm('Đã nhận hàng?')) return;
-            callApi('/Admin/XacNhanNhanHang', id);
+            if(!confirm('Đã nhận hàng thành công? Hàng sẽ được cộng vào kho của bạn.')) return;
+            callApi('/Warehouse/XacNhanNhanHang', id);
         }
 
         function huyPhieu(id) {
-            if(!confirm('Hủy phiếu này?')) return;
-            callApi('/Admin/HuyChuyenKho', id);
+            if(!confirm('Bạn có chắc chắn muốn hủy phiếu chuyển kho này?')) return;
+            callApi('/Warehouse/HuyChuyenKho', id);
         }
 
         function callApi(url, id) {
@@ -202,7 +243,7 @@
             formData.append('id', id);
             fetch(url, { method: 'POST', body: formData })
             .then(res => res.json())
-            .then(data => { if(data.success) location.reload(); else alert(data.message); });
+            .then(data => { if(data.success) location.reload(); else alert(data.message || 'Thao tác thất bại'); });
         }
     </script>
 }

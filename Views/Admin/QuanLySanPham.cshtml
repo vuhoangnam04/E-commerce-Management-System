@@ -1,4 +1,4 @@
-﻿@model IEnumerable<banthietbidientu.Models.SanPham>
+@model IEnumerable<banthietbidientu.Models.SanPham>
 
 @{
     ViewData["Title"] = "Quản lý sản phẩm";
@@ -6,12 +6,33 @@
 }
 
 <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <h2 class="fw-bold text-primary"><i class="bi bi-box-seam me-2"></i>Quản lý sản phẩm</h2>
-        <a asp-action="ThemSanPham" asp-controller="ProductManager" class="btn btn-success shadow-sm">
-            <i class="bi bi-plus-lg me-2"></i>Thêm sản phẩm
-        </a>
+        <div class="d-flex gap-2">
+            <div class="input-group shadow-sm" style="min-width: 260px;">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" id="searchProduct" class="form-control border-start-0" placeholder="Tìm sản phẩm...">
+            </div>
+            <a asp-action="ThemSanPham" asp-controller="ProductManager" class="btn btn-success shadow-sm text-nowrap">
+                <i class="bi bi-plus-lg me-2"></i>Thêm sản phẩm
+            </a>
+        </div>
     </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
@@ -69,7 +90,26 @@
                         }
                     </tbody>
                 </table>
+
+                @if (!Model.Any())
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-box-seam text-muted opacity-25" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">Chưa có sản phẩm nào trong hệ thống.</p>
+                    </div>
+                }
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('searchProduct').addEventListener('keyup', function () {
+        let searchText = this.value.toLowerCase();
+        let rows = document.querySelectorAll('.table tbody tr');
+        rows.forEach(row => {
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.includes(searchText) ? '' : 'none';
+        });
+    });
+</script>

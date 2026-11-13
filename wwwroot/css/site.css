@@ -1,5 +1,39 @@
-﻿html {
+/* ========================================================
+   SMARTTECH - SLEEK MINIMALIST DESIGN SYSTEM (APPLE STYLE)
+   ======================================================== */
+:root {
+    --st-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --st-bg: #f8fafc;
+    --st-surface: #ffffff;
+    --st-surface-secondary: #f1f5f9;
+    --st-text-main: #0f172a;
+    --st-text-muted: #64748b;
+    --st-text-subtle: #94a3b8;
+    --st-primary: #0f172a;
+    --st-accent: #2563eb;
+    --st-accent-hover: #1d4ed8;
+    --st-accent-light: #eff6ff;
+    --st-danger: #ef4444;
+    --st-success: #10b981;
+    --st-warning: #f59e0b;
+    --st-border: rgba(15, 23, 42, 0.08);
+    --st-border-strong: rgba(15, 23, 42, 0.16);
+    --st-radius-sm: 8px;
+    --st-radius-md: 12px;
+    --st-radius-lg: 18px;
+    --st-radius-xl: 24px;
+    --st-radius-pill: 9999px;
+    --st-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --st-shadow-sm: 0 2px 8px -2px rgba(15, 23, 42, 0.06);
+    --st-shadow-md: 0 12px 24px -6px rgba(15, 23, 42, 0.08);
+    --st-shadow-lg: 0 20px 40px -10px rgba(15, 23, 42, 0.12);
+}
+
+html {
     font-size: 14px;
+    position: relative;
+    min-height: 100%;
+    scroll-behavior: smooth;
 }
 
 @media (min-width: 768px) {
@@ -8,13 +42,171 @@
     }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+body {
+    font-family: var(--st-font);
+    background-color: var(--st-bg);
+    color: var(--st-text-main);
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-html {
-    position: relative;
-    min-height: 100%;
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Focus outline */
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+    border-color: var(--st-accent) !important;
+}
+
+/* Sleek Minimal Buttons */
+.btn-sleek-primary {
+    background: #0f172a;
+    color: #ffffff !important;
+    border: 1px solid #0f172a;
+    border-radius: var(--st-radius-pill);
+    font-weight: 600;
+    font-size: 0.92rem;
+    padding: 0.65rem 1.4rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--st-shadow-xs);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+.btn-sleek-primary:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: var(--st-shadow-sm);
+    color: #ffffff !important;
+}
+
+.btn-sleek-accent {
+    background: var(--st-accent);
+    color: #ffffff !important;
+    border: 1px solid var(--st-accent);
+    border-radius: var(--st-radius-pill);
+    font-weight: 600;
+    font-size: 0.92rem;
+    padding: 0.65rem 1.4rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+.btn-sleek-accent:hover {
+    background: var(--st-accent-hover);
+    border-color: var(--st-accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    color: #ffffff !important;
+}
+
+.btn-sleek-outline {
+    background: #ffffff;
+    color: var(--st-text-main) !important;
+    border: 1px solid var(--st-border-strong);
+    border-radius: var(--st-radius-pill);
+    font-weight: 600;
+    font-size: 0.92rem;
+    padding: 0.65rem 1.4rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+.btn-sleek-outline:hover {
+    background: var(--st-surface-secondary);
+    border-color: #cbd5e1;
+    color: var(--st-text-main) !important;
+    transform: translateY(-1px);
+}
+
+.btn-sleek-soft {
+    background: #f1f5f9;
+    color: var(--st-text-main) !important;
+    border: 1px solid transparent;
+    border-radius: var(--st-radius-pill);
+    font-weight: 600;
+    font-size: 0.88rem;
+    padding: 0.5rem 1.1rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    text-decoration: none;
+}
+.btn-sleek-soft:hover {
+    background: #e2e8f0;
+    color: #0f172a !important;
+}
+
+/* Minimal Card System */
+.card-sleek {
+    background: var(--st-surface);
+    border: 1px solid var(--st-border);
+    border-radius: var(--st-radius-lg);
+    box-shadow: var(--st-shadow-xs);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+.card-sleek:hover {
+    box-shadow: var(--st-shadow-md);
+    border-color: rgba(15, 23, 42, 0.12);
+    transform: translateY(-3px);
+}
+
+/* Minimal Pill Badges */
+.badge-sleek-category {
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.badge-sleek-stock {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+    border-radius: 999px;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.badge-sleek-stock.out-of-stock {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
 }
 
 /* --- SIDEBAR STYLES --- */

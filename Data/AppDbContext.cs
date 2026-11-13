@@ -1,4 +1,4 @@
-﻿using banthietbidientu.Models;
+using banthietbidientu.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -31,6 +31,7 @@ namespace banthietbidientu.Data
         public DbSet<BangLuong> BangLuongs { get; set; }
         public DbSet<TinNhan> TinNhans { get; set; }
         public DbSet<KhoHang> KhoHangs { get; set; }
+        public DbSet<CongViecKanban> CongViecKanbans { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -1,0 +1,126 @@
+@model banthietbidientu.Models.CongViecKanban
+
+@{
+    string prioClass = "badge-prio-normal";
+    string prioText = "Bình thường";
+    if (Model.DoUuTien == 3) { prioClass = "badge-prio-urgent"; prioText = "🔥 Khẩn cấp"; }
+    else if (Model.DoUuTien == 2) { prioClass = "badge-prio-high"; prioText = "⚡ Ưu tiên cao"; }
+    else if (Model.DoUuTien == 0) { prioClass = "badge-prio-low"; prioText = "⚪ Thấp"; }
+
+    string storeName = "Toàn hệ thống";
+    if (Model.StoreId == 1) storeName = "Kho Hà Nội";
+    else if (Model.StoreId == 2) storeName = "Kho Đà Nẵng";
+    else if (Model.StoreId == 3) storeName = "Kho TP.HCM";
+
+    bool isOverdue = Model.HanChot.HasValue && Model.HanChot.Value < DateTime.Now && Model.TrangThai != 3;
+}
+
+<div class="kanban-card"
+     id="kanban-task-@Model.Id"
+     draggable="true"
+     ondragstart="handleDragStart(event, @Model.Id)"
+     ondragend="handleDragEnd(event)">
+
+    <!-- Top Tags & Priority -->
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="d-flex flex-wrap gap-1 align-items-center">
+            <span class="badge @prioClass rounded-pill" style="font-size: 0.68rem; font-weight: 700;">
+                @prioText
+            </span>
+            <span class="badge-dept">
+                @Model.PhongBan
+            </span>
+        </div>
+
+        <!-- Quick Action Menu -->
+        <div class="dropdown card-quick-actions">
+            <button class="btn btn-sm btn-transparent p-0 text-secondary border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                <li class="dropdown-header small text-muted text-uppercase" style="font-size: 0.65rem;">Chuyển nhanh trạng thái</li>
+                @if (Model.TrangThai != 0)
+                {
+                    <li><a class="dropdown-item small" href="javascript:void(0)" onclick="quickMoveTask(@Model.Id, 0)"><i class="bi bi-arrow-left me-1 text-primary"></i> Về 'Cần làm'</a></li>
+                }
+                @if (Model.TrangThai != 1)
+                {
+                    <li><a class="dropdown-item small" href="javascript:void(0)" onclick="quickMoveTask(@Model.Id, 1)"><i class="bi bi-play-circle me-1 text-warning"></i> Chuyển 'Đang làm'</a></li>
+                }
+                @if (Model.TrangThai != 2)
+                {
+                    <li><a class="dropdown-item small" href="javascript:void(0)" onclick="quickMoveTask(@Model.Id, 2)"><i class="bi bi-eye me-1 text-info"></i> Chuyển 'Chờ kiểm tra'</a></li>
+                }
+                @if (Model.TrangThai != 3)
+                {
+                    <li><a class="dropdown-item small text-success" href="javascript:void(0)" onclick="quickMoveTask(@Model.Id, 3)"><i class="bi bi-check2-circle me-1"></i> Đánh dấu 'Hoàn thành'</a></li>
+                }
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item small text-primary" href="javascript:void(0)"
+                       onclick="openEditModal(@Model.Id, '@Html.Raw(Model.TieuDe?.Replace("'", "\\'"))', '@Html.Raw(Model.MoTa?.Replace("'", "\\'"))', '@Model.PhongBan', @Model.DoUuTien, @Model.TrangThai, @(Model.NguoiThucHienId.HasValue ? Model.NguoiThucHienId.Value.ToString() : "null"))">
+                        <i class="bi bi-pencil me-1"></i> Chỉnh sửa
+                    </a>
+                </li>
+                <li>
+                    <form asp-action="XoaCongViecKanban" asp-route-id="@Model.Id" method="post" class="m-0" onsubmit="return confirm('Bạn có chắc muốn xóa công việc này?');">
+                        <button type="submit" class="dropdown-item small text-danger">
+                            <i class="bi bi-trash3 me-1"></i> Xóa công việc
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Task Title -->
+    <h6 class="fw-bold text-white mb-2" style="font-size: 0.88rem; line-height: 1.4;">
+        @Model.TieuDe
+    </h6>
+
+    <!-- Task Description -->
+    @if (!string.IsNullOrEmpty(Model.MoTa))
+    {
+        <p class="text-muted small mb-3" style="font-size: 0.76rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;">
+            @Model.MoTa
+        </p>
+    }
+
+    <!-- Meta Details: Store & Assignee -->
+    <div class="d-flex align-items-center justify-content-between pt-2 border-top" style="border-color: rgba(255,255,255,0.06) !important; font-size: 0.75rem;">
+        <div class="d-flex align-items-center gap-1 text-muted">
+            <i class="bi bi-geo-alt"></i>
+            <span>@storeName</span>
+        </div>
+
+        <!-- Assignee Avatar -->
+        <div class="d-flex align-items-center gap-2">
+            @if (!string.IsNullOrEmpty(Model.TenNguoiThucHien))
+            {
+                <span class="text-white fw-semibold text-truncate" style="max-width: 110px;" title="@Model.TenNguoiThucHien">@Model.TenNguoiThucHien</span>
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 26px; height: 26px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); font-size: 0.7rem; border: 1px solid rgba(255,255,255,0.2);">
+                    @Model.TenNguoiThucHien.Substring(0, 1).ToUpper()
+                </div>
+            }
+            else
+            {
+                <span class="text-muted fst-italic">Chưa giao</span>
+            }
+        </div>
+    </div>
+
+    <!-- Deadline Notice -->
+    @if (Model.HanChot.HasValue)
+    {
+        <div class="mt-2 pt-1 d-flex align-items-center justify-content-between" style="font-size: 0.72rem;">
+            <div class="@(isOverdue ? "text-danger fw-bold" : "text-muted")">
+                <i class="bi bi-clock me-1"></i>
+                <span>Hạn: @Model.HanChot.Value.ToString("dd/MM/yyyy HH:mm")</span>
+            </div>
+            @if (isOverdue)
+            {
+                <span class="badge bg-danger rounded-pill" style="font-size: 0.6rem;">Quá hạn</span>
+            }
+        </div>
+    }
+</div>

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<banthietbidientu.Models.YeuCauThuMua>
+@model IEnumerable<banthietbidientu.Models.YeuCauThuMua>
 @inject banthietbidientu.Services.MemberService MemberService
 
 @{
@@ -134,11 +134,19 @@
                                     <small class="text-muted">@item.GhiChu</small>
                                 </td>
                                 <td class="text-end pe-4">
-                                    <button class="btn btn-sm @(isFinalState ? "btn-outline-secondary" : "btn-outline-primary")"
+                                    <button class="btn btn-sm @(isFinalState ? "btn-outline-secondary" : "btn-outline-primary") me-1"
                                             data-bs-toggle="modal"
-                                            data-bs-target="#modal-@item.Id">
-                                        <i class="bi @(isFinalState ? "bi-eye" : "bi-pencil-square")"></i> @(isFinalState ? "Xem chi tiết" : "Xử lý")
+                                            data-bs-target="#modal-@item.Id"
+                                            title="@(isFinalState ? "Xem chi tiết" : "Xử lý yêu cầu")">
+                                        <i class="bi @(isFinalState ? "bi-eye" : "bi-pencil-square")"></i> @(isFinalState ? "Xem" : "Xử lý")
                                     </button>
+
+                                    <form asp-action="XoaThuMua" asp-controller="Admin" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa yêu cầu thu mua #@item.MaYeuCau này?');">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa yêu cầu">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
 
                                     <div class="modal fade" id="modal-@item.Id" tabindex="-1">
                                         <div class="modal-dialog">

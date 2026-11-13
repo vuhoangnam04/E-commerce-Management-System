@@ -1,199 +1,605 @@
-﻿/* ===========================================================
-   ❄️ BLUE FIRE LIGHT THEME (LỬA XANH DƯƠNG - NỀN TRẮNG) ❄️
+/* ===========================================================
+   🌌 SMARTTECH ENTERPRISE MODERN DARK ADMIN THEME 🌌
+   Designed for Executive Workflow Management
+   Deep Slate / Obsidian background, high legibility, clean borders
    =========================================================== */
 
 :root {
-    /* Bảng màu Lửa Xanh */
-    --plasma-core: #e0ffff; /* Trắng xanh (Tâm lửa) */
-    --plasma-mid: #00e5ff; /* Xanh Cyan (Giữa) */
-    --plasma-outer: #2979ff; /* Xanh đậm (Ngoài cùng) */
-    /* Nền Trắng */
-    --bg-body: #f8f9fa; /* Nền web xám rất nhạt */
-    --bg-sidebar: #ffffff; /* Sidebar Trắng tinh */
-    --text-main: #333333; /* Chữ đen */
-    --text-hover: #ffffff; /* Chữ trắng khi lửa cháy */
+    --adm-font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    
+    /* Dark Surface Palette */
+    --adm-bg-body: #0b0f19;         /* Nền tổng thể: Dark Obsidian */
+    --adm-bg-sidebar: #0f172a;      /* Sidebar: Slate 900 */
+    --adm-bg-topbar: rgba(15, 23, 42, 0.92); /* Topbar mờ tối */
+    --adm-bg-card: #131d33;         /* Thẻ Card chính: Slate 850 */
+    --adm-bg-card-hover: #17233f;   /* Hover Card */
+    --adm-bg-surface: #1e293b;      /* Input, Dropdown, Table Head: Slate 800 */
+    --adm-bg-surface-alt: #0a1120;  /* Khối nhấn chìm */
 
-    --sidebar-width: 260px;
+    /* Typography Colors */
+    --adm-text-main: #f8fafc;       /* Chữ sáng chính */
+    --adm-text-muted: #94a3b8;      /* Chữ phụ, nhãn */
+    --adm-text-dim: #64748b;        /* Chữ mờ */
+
+    /* Borders */
+    --adm-border-subtle: rgba(255, 255, 255, 0.07);
+    --adm-border-card: rgba(255, 255, 255, 0.09);
+    --adm-border-highlight: rgba(59, 130, 246, 0.4);
+
+    /* Accent & Status Colors (Vibrant on Dark) */
+    --adm-accent: #3b82f6;          /* Xanh công nghệ */
+    --adm-accent-glow: rgba(59, 130, 246, 0.25);
+    --adm-success: #10b981;         /* Xanh lá hoàn thành */
+    --adm-warning: #f59e0b;         /* Vàng cảnh báo/chờ duyệt */
+    --adm-danger: #ef4444;          /* Đỏ hủy/nguy cấp */
+    --adm-purple: #8b5cf6;          /* Tím quy trình */
+    --adm-cyan: #06b6d4;            /* Cyan điều phối kho */
+
+    /* Dimensions */
+    --adm-sidebar-width: 280px;
+    --adm-topbar-height: 70px;
+
+    /* Shadows */
+    --adm-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.3);
+    --adm-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --adm-shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
 }
 
-/* 1. CẤU TRÚC LAYOUT (GIỮ NGUYÊN ĐỂ KHÔNG VỠ) */
+/* 1. Global Reset & Dark Body */
 body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-body) !important;
-    color: var(--text-main) !important;
+    font-family: var(--adm-font-sans) !important;
+    background-color: var(--adm-bg-body) !important;
+    color: var(--adm-text-main) !important;
+    letter-spacing: -0.01em;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 .wrapper {
     display: flex;
     width: 100%;
     min-height: 100vh;
+    background-color: var(--adm-bg-body);
 }
 
-/* 2. SIDEBAR TRẮNG SẠCH SẼ */
+/* 2. Modern Dark Sidebar */
 #sidebar {
-    min-width: var(--sidebar-width);
-    max-width: var(--sidebar-width);
-    background-color: var(--bg-sidebar) !important;
-    border-right: 1px solid #e9ecef; /* Viền xám nhạt */
+    min-width: var(--adm-sidebar-width);
+    max-width: var(--adm-sidebar-width);
+    background-color: var(--adm-bg-sidebar) !important;
+    border-right: 1px solid var(--adm-border-subtle);
     position: fixed;
     top: 0;
     left: 0;
     height: 100vh;
     z-index: 1000;
-    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05); /* Bóng mờ nhẹ */
+    overflow-y: auto;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 
-    /* Header Logo */
-    #sidebar .sidebar-header {
-        padding: 20px;
-        background-color: #fff !important;
-        border-bottom: 1px solid #f0f0f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-        #sidebar .sidebar-header h5 {
-            color: var(--plasma-outer) !important;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-    /* 3. MENU & HIỆU ỨNG PHUN LỬA XANH */
-    #sidebar ul.components {
-        padding: 20px 10px;
-    }
-
-    #sidebar ul li {
-        margin-bottom: 5px;
-    }
-
-        #sidebar ul li a {
-            color: #555 !important; /* Màu chữ gốc: Xám đen */
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            position: relative; /* Để chứa lửa */
-            z-index: 1;
-            font-weight: 600;
-            border-radius: 8px;
-            overflow: hidden; /* Khóa lửa bên trong nút */
-            transition: color 0.2s ease;
-        }
-
-            /* --- LỚP LỬA (PSEUDO ELEMENT) --- */
-            #sidebar ul li a::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 0%; /* Ban đầu ẩn */
-                height: 100%;
-                z-index: -1; /* Nằm dưới chữ */
-                /* Gradient lửa xanh dương */
-                background: linear-gradient( 90deg, var(--plasma-outer) 0%, var(--plasma-mid) 50%, var(--plasma-outer) 100% );
-                /* Hiệu ứng phun: Nhanh và dứt khoát (Ease-Out) */
-                transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                /* Làm nghiêng nhẹ đầu lửa cho giống tia năng lượng */
-                transform: skewX(-10deg);
-                transform-origin: left;
-            }
-
-            /* --- KHI DI CHUỘT (LỬA PHUN) --- */
-            #sidebar ul li a:hover::before,
-            #sidebar ul li a.active::before {
-                width: 150%; /* Phun tràn qua nút */
-                transform: skewX(0deg); /* Trả về thẳng */
-            }
-
-            #sidebar ul li a:hover,
-            #sidebar ul li a.active {
-                color: #fff !important; /* Chữ chuyển trắng ngay lập tức */
-                box-shadow: 0 5px 15px rgba(0, 229, 255, 0.4); /* Phát sáng xanh ra ngoài */
-            }
-
-            /* --- ICON BAN ĐẦU --- */
-            #sidebar ul li a i {
-                margin-right: 15px;
-                font-size: 1.2rem;
-                color: #888; /* Icon xám */
-                transition: all 0.2s;
-            }
-
-/* --- HIỆU ỨNG ICON BỐC CHÁY (ANIMATION) --- */
-@keyframes blueBurn {
-    0% {
-        transform: scale(1);
-        text-shadow: 0 0 0 transparent;
-    }
-
-    50% {
-        transform: scale(1.2) rotate(5deg);
-        text-shadow: 0 0 10px var(--plasma-mid), 0 0 20px var(--plasma-core);
-    }
-
-    100% {
-        transform: scale(1.1) rotate(-5deg);
-        text-shadow: 0 0 15px var(--plasma-core), 0 0 30px var(--plasma-mid);
-    }
+#sidebar::-webkit-scrollbar {
+    width: 5px;
 }
 
-/* Khi lửa chạm tới (Hover/Active) */
-#sidebar ul li a:hover i,
-#sidebar ul li a.active i {
-    color: #fff !important; /* Icon chuyển trắng sáng */
-    /* Kích hoạt Animation rung lắc cháy */
-    animation: blueBurn 0.4s infinite alternate;
-    /* Delay 0.15s: Đợi lửa phun tới nơi mới cháy */
-    transition-delay: 0.15s;
+#sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
 }
 
-/* Tiêu đề nhóm */
-#sidebar ul li.text-uppercase {
-    color: #999 !important;
-    font-size: 0.75rem;
+#sidebar .sidebar-header {
+    height: var(--adm-topbar-height);
+    padding: 0 20px;
+    background: #0f172a;
+    border-bottom: 1px solid var(--adm-border-subtle);
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#sidebar .sidebar-header .brand-logo-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.25rem;
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+    margin-right: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+#sidebar .sidebar-header .brand-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+#sidebar .sidebar-header .brand-subtitle {
+    font-size: 0.65rem;
     font-weight: 700;
-    margin-top: 20px;
-    padding-left: 10px;
+    color: #60a5fa;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
-/* 4. CÁC PHẦN KHÁC (CONTENT, HEADER) - GIỮ NGUYÊN VỊ TRÍ */
+/* Sidebar Navigation Items */
+#sidebar ul.components {
+    padding: 16px 12px 60px 12px;
+}
+
+#sidebar ul li {
+    margin-bottom: 3px;
+}
+
+#sidebar ul li.nav-header-text {
+    padding: 16px 12px 6px 12px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#sidebar ul li a {
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    color: #94a3b8 !important;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+}
+
+#sidebar ul li a i {
+    font-size: 1.1rem;
+    margin-right: 12px;
+    color: #64748b;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+#sidebar ul li a:hover {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+#sidebar ul li a:hover i {
+    color: #60a5fa;
+    transform: scale(1.08);
+}
+
+#sidebar ul li a.active {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+#sidebar ul li a.active i {
+    color: #ffffff !important;
+}
+
+#sidebar ul li a .badge-menu {
+    margin-left: auto;
+    font-size: 0.68rem;
+    padding: 3px 7px;
+    border-radius: 999px;
+}
+
+/* 3. Modern Dark Topbar & Content */
 #content {
-    width: 100%;
+    width: calc(100% - var(--adm-sidebar-width));
+    margin-left: var(--adm-sidebar-width);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    margin-left: var(--sidebar-width);
-    width: calc(100% - var(--sidebar-width));
+    background-color: var(--adm-bg-body);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .admin-navbar {
-    height: 70px;
-    background-color: #fff !important;
-    border-bottom: 1px solid #e9ecef;
-    padding: 0 30px;
+    height: var(--adm-topbar-height);
+    background: var(--adm-bg-topbar) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--adm-border-subtle);
+    padding: 0 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
-    #sidebar {
-        margin-left: calc(var(--sidebar-width) * -1);
-    }
+.admin-search-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 300px;
+    transition: all 0.2s ease;
+}
 
+.admin-search-pill:focus-within {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: #3b82f6;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+}
+
+.admin-search-pill input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-size: 0.85rem;
+    color: #ffffff;
+}
+
+.admin-search-pill input::placeholder {
+    color: #64748b;
+}
+
+.main-body {
+    padding: 32px;
+    flex-grow: 1;
+    background-color: var(--adm-bg-body);
+}
+
+/* 4. Modern Dark Card System */
+.card {
+    border: 1px solid var(--adm-border-card) !important;
+    border-radius: 16px !important;
+    background: var(--adm-bg-card) !important;
+    color: var(--adm-text-main) !important;
+    box-shadow: var(--adm-shadow-card) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-header {
+    background-color: transparent !important;
+    border-bottom: 1px solid var(--adm-border-subtle) !important;
+    padding: 18px 24px !important;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #ffffff !important;
+}
+
+.card-body {
+    color: var(--adm-text-main) !important;
+}
+
+/* 5. Modern Dark KPI Cards */
+.kpi-card {
+    border: 1px solid var(--adm-border-card);
+    border-radius: 16px;
+    background: var(--adm-bg-card);
+    padding: 22px;
+    box-shadow: var(--adm-shadow-card);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.kpi-icon-container {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+
+.kpi-icon-emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); }
+.kpi-icon-amber   { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25); }
+.kpi-icon-indigo  { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.25); }
+.kpi-icon-sky     { background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.25); }
+.kpi-icon-rose    { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.25); }
+
+.kpi-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    margin-bottom: 6px;
+}
+
+.kpi-value {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+}
+
+.kpi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+}
+
+.kpi-badge-success { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.kpi-badge-danger  { background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+.kpi-badge-neutral { background: rgba(255, 255, 255, 0.08); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.1); }
+
+/* 6. Modern Dark Tables */
+.table {
+    --bs-table-bg: transparent !important;
+    --bs-table-color: var(--adm-text-main) !important;
+    color: var(--adm-text-main) !important;
+    border-color: var(--adm-border-subtle) !important;
+}
+
+.table thead th {
+    background: #0f172a !important;
+    color: #94a3b8 !important;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--adm-border-subtle) !important;
+}
+
+.table tbody td {
+    padding: 16px 18px;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    color: #e2e8f0 !important;
+    font-size: 0.88rem;
+}
+
+.table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* 7. Dark Form Controls & Dropdowns */
+.form-control, .form-select {
+    background-color: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    font-size: 0.88rem;
+    border-radius: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: #1e293b !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.3) !important;
+    color: #ffffff !important;
+}
+
+.form-control::placeholder {
+    color: #64748b !important;
+}
+
+/* Dropdown Menus */
+.dropdown-menu {
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 14px !important;
+    padding: 8px !important;
+    background: #1e293b !important;
+    color: #ffffff !important;
+}
+
+.dropdown-item {
+    padding: 9px 14px;
+    font-size: 0.88rem;
+    border-radius: 8px;
+    color: #cbd5e1 !important;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+.dropdown-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* User pill in topbar */
+.user-profile-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px 6px 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+}
+
+.user-profile-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
+}
+
+.user-avatar-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Notification Pill */
+.notification-pill-badge {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 2px solid #0f172a;
+}
+
+.bg-unread {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    border-left: 3px solid #3b82f6 !important;
+}
+
+.bg-unread:hover {
+    background-color: rgba(59, 130, 246, 0.18) !important;
+}
+
+/* 8. Workflow Pipeline Stepper */
+.workflow-pipeline-card {
+    background: var(--adm-bg-card);
+    border: 1px solid var(--adm-border-card);
+    border-radius: 18px;
+    padding: 20px 24px;
+    box-shadow: var(--adm-shadow-card);
+    margin-bottom: 24px;
+}
+
+.pipeline-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    gap: 12px;
+}
+
+.pipeline-step-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    flex: 1;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+}
+
+.pipeline-step-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+.pipeline-step-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.pipeline-arrow {
+    color: #475569;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+@media (max-width: 992px) {
+    .pipeline-stepper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .pipeline-arrow {
+        display: none;
+    }
+    #sidebar {
+        margin-left: calc(var(--adm-sidebar-width) * -1);
+    }
     #content {
         margin-left: 0;
         width: 100%;
     }
-
     #sidebar.active {
         margin-left: 0;
-        box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
     }
+}
+
+/* 9. Global Dark Mode Overrides for Legacy Views */
+.bg-light, thead.bg-light, thead.bg-light tr th {
+    background-color: #0f172a !important;
+    color: #94a3b8 !important;
+}
+
+.bg-white {
+    background-color: #131d33 !important;
+    color: #ffffff !important;
+}
+
+.text-dark {
+    color: #f8fafc !important;
+}
+
+.border, .border-bottom, .border-top, .border-start, .border-end {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.status-select {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.modal-content {
+    background-color: #131d33 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #f8fafc !important;
+}
+
+.modal-header, .modal-footer {
+    border-color: rgba(255, 255, 255, 0.08) !important;
 }

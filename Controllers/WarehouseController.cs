@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -67,6 +67,60 @@ namespace banthietbidientu.Controllers
             return RedirectToAction("QuanLyNhapHang");
         }
 
+        [Authorize(Roles = "Boss")]
+        [HttpPost]
+        public async Task<IActionResult> XoaPhieuNhap(int id)
+        {
+            var phieuNhap = await _context.PhieuNhaps
+                .Include(p => p.ChiTiets)
+                .ThenInclude(ct => ct.SanPham)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (phieuNhap == null)
+            {
+                TempData["Error"] = "Không tìm thấy phiếu nhập!";
+                return RedirectToAction("QuanLyNhapHang");
+            }
+
+            // Kiểm tra an toàn tồn kho trước khi trừ lại
+            foreach (var ct in phieuNhap.ChiTiets)
+            {
+                var sp = ct.SanPham;
+                if (sp != null)
+                {
+                    var khoHN = await _context.KhoHangs.FirstOrDefaultAsync(k => k.SanPhamId == ct.SanPhamId && k.StoreId == 1);
+                    if (sp.SoLuong < ct.SoLuongNhap || (khoHN != null && khoHN.SoLuong < ct.SoLuongNhap))
+                    {
+                        TempData["Error"] = $"Không thể xóa phiếu nhập #{id} vì sản phẩm '{sp.Name}' đã được bán hoặc luân chuyển (tồn kho hiện tại ít hơn số lượng đã nhập).";
+                        return RedirectToAction("QuanLyNhapHang");
+                    }
+                }
+            }
+
+            // Hoàn trả lại số lượng tồn kho
+            foreach (var ct in phieuNhap.ChiTiets)
+            {
+                var sp = ct.SanPham;
+                if (sp != null)
+                {
+                    sp.SoLuong -= ct.SoLuongNhap;
+                    var khoHN = await _context.KhoHangs.FirstOrDefaultAsync(k => k.SanPhamId == ct.SanPhamId && k.StoreId == 1);
+                    if (khoHN != null)
+                    {
+                        khoHN.SoLuong -= ct.SoLuongNhap;
+                    }
+                }
+            }
+
+            _context.ChiTietPhieuNhaps.RemoveRange(phieuNhap.ChiTiets);
+            _context.PhieuNhaps.Remove(phieuNhap);
+            await _context.SaveChangesAsync();
+
+            GhiNhatKy("Xóa phiếu nhập", $"Đã xóa phiếu nhập #{phieuNhap.Id} và hoàn lại số lượng tồn kho.");
+            TempData["Success"] = $"Đã xóa phiếu nhập #{phieuNhap.Id} thành công!";
+            return RedirectToAction("QuanLyNhapHang");
+        }
+
         // --- CHUYỂN KHO ---
         public IActionResult QuanLyChuyenKho()
         {
@@ -98,8 +152,18 @@ namespace banthietbidientu.Controllers
 
             if (!isBoss) { model.DenKhoId = user.StoreId ?? 0; model.TuKhoId = 0; }
 
+            if (model.SoLuong <= 0) ModelState.AddModelError("SoLuong", "Số lượng yêu cầu chuyển phải lớn hơn 0!");
             if (isBoss && (model.TuKhoId == 0 || model.DenKhoId == 0)) ModelState.AddModelError("", "Chọn đủ 2 kho!");
-            if (model.TuKhoId != 0 && model.TuKhoId == model.DenKhoId) ModelState.AddModelError("", "Kho đi/đến trùng nhau!");
+            if (model.TuKhoId != 0 && model.TuKhoId == model.DenKhoId) ModelState.AddModelError("", "Kho đi và kho đến không được trùng nhau!");
+
+            if (isBoss && model.TuKhoId != 0 && model.SoLuong > 0)
+            {
+                var khoNguon = await _context.KhoHangs.FirstOrDefaultAsync(k => k.SanPhamId == model.SanPhamId && k.StoreId == model.TuKhoId);
+                if (khoNguon == null || khoNguon.SoLuong < model.SoLuong)
+                {
+                    ModelState.AddModelError("", $"Kho xuất ({GetStoreName(model.TuKhoId)}) chỉ còn tồn {(khoNguon?.SoLuong ?? 0)} sản phẩm, không đủ để chuyển {model.SoLuong}!");
+                }
+            }
 
             if (!ModelState.IsValid)
             {
@@ -183,16 +247,57 @@ namespace banthietbidientu.Controllers
         }
 
         [HttpPost]
-        public IActionResult HuyChuyenKho(int id)
+        public async Task<IActionResult> HuyChuyenKho(int id)
         {
-            var phieu = _context.PhieuChuyenKhos.Find(id);
-            if (phieu != null && phieu.TrangThai == 0)
+            var phieu = await _context.PhieuChuyenKhos.Include(p => p.SanPham).FirstOrDefaultAsync(p => p.Id == id);
+            if (phieu == null) return Json(new { success = false, message = "Không tìm thấy phiếu" });
+
+            if (phieu.TrangThai == 0)
             {
                 phieu.TrangThai = -1;
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
+                GhiNhatKy("Hủy chuyển kho", $"Đã hủy phiếu chuyển kho #{phieu.MaPhieu}");
                 return Json(new { success = true });
             }
-            return Json(new { success = false });
+            else if (phieu.TrangThai == 1)
+            {
+                // Hoàn lại kho xuất phát
+                var khoDi = await _context.KhoHangs.FirstOrDefaultAsync(k => k.SanPhamId == phieu.SanPhamId && k.StoreId == phieu.TuKhoId);
+                if (khoDi != null) khoDi.SoLuong += phieu.SoLuong;
+                else _context.KhoHangs.Add(new KhoHang { SanPhamId = phieu.SanPhamId, StoreId = phieu.TuKhoId, SoLuong = phieu.SoLuong });
+
+                phieu.TrangThai = -1;
+                await _context.SaveChangesAsync();
+                GhiNhatKy("Hủy chuyển kho", $"Hủy phiếu #{phieu.MaPhieu} khi đang chuyển và đã hoàn {phieu.SoLuong} {phieu.SanPham?.Name} về {GetStoreName(phieu.TuKhoId)}");
+                return Json(new { success = true });
+            }
+            return Json(new { success = false, message = "Không thể hủy phiếu ở trạng thái này!" });
+        }
+
+        [Authorize(Roles = "Boss")]
+        [HttpPost]
+        public async Task<IActionResult> XoaLenhChuyenKho(int id)
+        {
+            var phieu = await _context.PhieuChuyenKhos.FindAsync(id);
+            if (phieu == null)
+            {
+                TempData["Error"] = "Không tìm thấy phiếu điều phối!";
+                return RedirectToAction("QuanLyChuyenKho");
+            }
+
+            if (phieu.TrangThai == 1)
+            {
+                TempData["Error"] = "Phiếu đang trong quá trình luân chuyển hàng, hãy chọn 'Hủy' trước khi xóa!";
+                return RedirectToAction("QuanLyChuyenKho");
+            }
+
+            string ma = phieu.MaPhieu;
+            _context.PhieuChuyenKhos.Remove(phieu);
+            await _context.SaveChangesAsync();
+
+            GhiNhatKy("Xóa phiếu chuyển kho", $"Đã xóa phiếu điều phối: {ma}");
+            TempData["Success"] = $"Đã xóa phiếu điều phối #{ma} thành công!";
+            return RedirectToAction("QuanLyChuyenKho");
         }
 
         // Tool di cư (Có thể xóa sau này)
