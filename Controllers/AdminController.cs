@@ -15,9 +15,14 @@ namespace banthietbidientu.Controllers
     [Authorize(Roles = "Admin,Boss")]
     public class AdminController : BaseAdminController
     {
-        // Constructor kế thừa từ BaseAdminController
-        public AdminController(ApplicationDbContext context, IEmailSender emailSender) : base(context, emailSender)
+        // Khai báo MemberService để xử lý cache hạng thành viên
+        private readonly MemberService _memberService;
+
+        // Constructor: Inject thêm MemberService
+        public AdminController(ApplicationDbContext context, IEmailSender emailSender, MemberService memberService)
+            : base(context, emailSender)
         {
+            _memberService = memberService;
         }
 
         // --- 1. DASHBOARD (THỐNG KÊ) ---
@@ -255,6 +260,13 @@ namespace banthietbidientu.Controllers
                 donHang.TrangThai = statusInt;
                 await _context.SaveChangesAsync();
 
+                // --- XỬ LÝ XÓA CACHE ĐỂ CẬP NHẬT HẠNG THÀNH VIÊN ---
+                if ((statusInt == 3 || statusInt == -1) && donHang.TaiKhoan != null)
+                {
+                    _memberService.ClearUserCache(donHang.TaiKhoan.Username);
+                }
+                // ----------------------------------------------------
+
                 GhiNhatKy("Cập nhật đơn hàng", $"Đổi trạng thái đơn {orderId} từ '{trangThaiCu}' sang '{status}'");
 
                 if (statusInt == 3)
@@ -374,7 +386,10 @@ namespace banthietbidientu.Controllers
                         daDoc = x.DaDoc,
                         loaiThongBao = x.LoaiThongBao,
                         redirectId = x.RedirectId,
-                        redirectAction = x.RedirectAction
+                        redirectAction = x.RedirectAction,
+                        controller = (x.RedirectAction == "QuanLyChuyenKho" || x.RedirectAction == "QuanLyNhapHang") ? "Warehouse" :
+                                     (x.RedirectAction == "QuanLySanPham" || x.RedirectAction == "Index" && x.TieuDe.Contains("Sản phẩm")) ? "ProductManager" :
+                                     "Admin"
                     })
                     .ToList();
 

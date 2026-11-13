@@ -3,6 +3,8 @@
 @{
     ViewData["Title"] = "Quản lý sản phẩm";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    bool isBoss = ViewBag.IsBoss ?? false;
+    int currentStoreId = ViewBag.CurrentStoreId ?? 0;
 }
 
 <div class="container-fluid py-4">

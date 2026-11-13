@@ -16,11 +16,29 @@ namespace banthietbidientu.Controllers
         {
         }
 
-        public IActionResult Index()    
+        // --- 1. DANH SÁCH SẢN PHẨM (Đã cập nhật logic phân quyền & tồn kho) ---
+        public IActionResult Index()
         {
-            return View("~/Views/Admin/QuanLySanPham.cshtml", _context.SanPhams.AsNoTracking().ToList());
+            // Lấy thông tin user hiện tại
+            var user = _context.TaiKhoans.AsNoTracking().FirstOrDefault(u => u.Username == User.Identity.Name);
+            bool isBoss = user?.Role == "Boss";
+            int? storeId = user?.StoreId;
+
+            // Truyền xuống View để ẩn/hiện nút và cột giá nhập
+            ViewBag.IsBoss = isBoss;
+            ViewBag.CurrentStoreId = storeId ?? 0;
+
+            // QUAN TRỌNG: Include KhoHangs để lấy số lượng tồn kho chi tiết từng chi nhánh
+            var listSanPhams = _context.SanPhams
+                                       .Include(s => s.KhoHangs)
+                                       .AsNoTracking()
+                                       .OrderByDescending(s => s.Id)
+                                       .ToList();
+
+            return View("~/Views/Admin/QuanLySanPham.cshtml", listSanPhams);
         }
 
+        // --- 2. THÊM SẢN PHẨM (Chỉ Boss) ---
         [Authorize(Roles = "Boss")]
         [HttpGet]
         public IActionResult ThemSanPham()
@@ -60,7 +78,7 @@ namespace banthietbidientu.Controllers
                         if (string.IsNullOrEmpty(model.Description)) model.Description = model.MoTa ?? "";
 
                         _context.SanPhams.Add(model);
-                        _context.SaveChanges(); // Lưu lần 1 để lấy ID
+                        _context.SaveChanges(); // Lưu để lấy ID sản phẩm
 
                         // 2. Lưu kho hàng chi nhánh
                         var k1 = new KhoHang { SanPhamId = model.Id, StoreId = 1, SoLuong = slHaNoi };
@@ -68,9 +86,9 @@ namespace banthietbidientu.Controllers
                         var k3 = new KhoHang { SanPhamId = model.Id, StoreId = 3, SoLuong = slHCM };
 
                         _context.KhoHangs.AddRange(k1, k2, k3);
-                        _context.SaveChanges(); // Lưu lần 2
+                        _context.SaveChanges();
 
-                        transaction.Commit(); // Chốt giao dịch
+                        transaction.Commit();
 
                         GhiNhatKy("Thêm sản phẩm", $"Thêm mới: {model.Name} (Tổng tồn: {model.SoLuong})");
                         TempData["Success"] = $"Thêm sản phẩm '{model.Name}' thành công!";
@@ -86,12 +104,13 @@ namespace banthietbidientu.Controllers
             }
             else
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                TempData["Error"] = "Dữ liệu không hợp lệ: " + string.Join(", ", errors);
+                var errors = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                TempData["Error"] = "Dữ liệu không hợp lệ: " + errors;
             }
             return View("~/Views/Admin/ThemSanPham.cshtml", model);
         }
 
+        // --- 3. SỬA SẢN PHẨM (Chỉ Boss) ---
         [Authorize(Roles = "Boss")]
         [HttpGet]
         public IActionResult SuaSanPham(int id)
@@ -99,6 +118,7 @@ namespace banthietbidientu.Controllers
             var sp = _context.SanPhams.Find(id);
             if (sp == null) return NotFound();
 
+            // Lấy thông tin tồn kho hiện tại để điền vào form
             var khoHangs = _context.KhoHangs.Where(k => k.SanPhamId == id).ToList();
 
             ViewBag.SlHaNoi = khoHangs.FirstOrDefault(k => k.StoreId == 1)?.SoLuong ?? 0;
@@ -188,6 +208,7 @@ namespace banthietbidientu.Controllers
             return View("~/Views/Admin/SuaSanPham.cshtml", model);
         }
 
+        // --- 4. XÓA SẢN PHẨM (Chỉ Boss) ---
         [Authorize(Roles = "Boss")]
         [HttpPost]
         public IActionResult XoaSanPham(int id)
@@ -242,6 +263,7 @@ namespace banthietbidientu.Controllers
             return RedirectToAction("Index");
         }
 
+        // --- 5. API CẬP NHẬT GIÁ VỐN NHANH (Cho Ajax nếu cần) ---
         [Authorize(Roles = "Boss")]
         [HttpPost]
         public async Task<IActionResult> CapNhatGiaNhapNhanh(int id, decimal giaNhap)
